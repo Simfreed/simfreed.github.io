@@ -24,7 +24,7 @@ I am a computational and theoretical biophysicist interested in how collective m
 I attained a Physics Ph.D. at University of Chicago in 2018 (advisor: [Aaron Dinner](https://dinner-group.uchicago.edu/)) studying cytokseletal networks and am currently a postdoctoral fellow at Northwestern University working with [Madhav Mani](https://madhavmani.com) to understand the dynamics of embryonic and tissue development. 
 I aim to lead a research group that uses physics, math, and computation to solve problems that are fundamental to basic biology and critical for public health.
 
-I also made a mobile-friendly <a href="/games/10-20-30-solitaire/">10-20-30 Solitaire game</a>.
+I also made a mobile-friendly <a href="/games/10-20-30-solitaire/index.html">10-20-30 Solitaire game</a>.
 <br />
 <br />
 <br />
