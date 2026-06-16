@@ -61,23 +61,6 @@
         padding: 16px 16px 104px;
       }
 
-      .top-link {
-        display: inline-flex;
-        align-items: center;
-        min-height: 36px;
-        margin-bottom: 10px;
-        color: var(--muted);
-        font-size: 0.92rem;
-        font-weight: 800;
-        text-decoration: none;
-      }
-
-      .top-link:hover,
-      .top-link:focus-visible {
-        color: var(--ink);
-        text-decoration: underline;
-      }
-
       header {
         display: flex;
         align-items: end;
@@ -249,7 +232,8 @@
       }
 
       .pile {
-        min-height: 270px;
+        min-height: var(--pile-height, 270px);
+        height: var(--pile-height, auto);
         border: 1px solid rgba(255, 250, 240, 0.22);
         border-radius: 8px;
         background: rgba(7, 28, 23, 0.38);
@@ -280,17 +264,18 @@
 
       .cards {
         display: grid;
-        gap: 7px;
+        gap: var(--card-gap, 7px);
         margin-top: 10px;
       }
 
       .card {
-        min-height: 76px;
+        min-height: var(--card-height, 76px);
+        height: var(--card-height, 76px);
         border: 1px solid rgba(36, 30, 24, 0.2);
         border-radius: 8px;
         background: var(--paper);
         color: var(--paper-ink);
-        padding: 8px 9px;
+        padding: var(--card-pad-y, 8px) var(--card-pad-x, 9px);
         box-shadow: 0 7px 14px rgba(0, 0, 0, 0.19);
       }
 
@@ -307,12 +292,12 @@
         align-items: start;
         justify-content: space-between;
         gap: 8px;
-        font-size: 1.2rem;
+        font-size: var(--rank-size, 1.2rem);
         font-weight: 950;
       }
 
       .suit {
-        font-size: 2.3rem;
+        font-size: var(--suit-size, 2.3rem);
         line-height: 0.76;
       }
 
@@ -327,45 +312,29 @@
         font-weight: 950;
       }
 
-      .decision {
+      .turn-actions,
+      .global-actions {
         display: grid;
-        grid-template-columns: minmax(120px, 0.5fr) minmax(0, 1.5fr);
-        gap: 14px;
-        align-items: center;
-        margin-top: 16px;
-        border-radius: 8px;
-        background: #fff4d1;
-        color: #2b2118;
-        padding: 14px;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
-      }
-
-      .decision p {
-        margin: 0;
-        color: #7b341e;
-        font-size: 0.78rem;
-        font-weight: 950;
-        text-transform: uppercase;
-      }
-
-      .decision h2 {
-        margin: 2px 0 0;
-        font-size: 1.8rem;
-        line-height: 1;
-        letter-spacing: 0;
-      }
-
-      .choices {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
       }
 
+      .turn-actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .global-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .action-bar.choosing .turn-actions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
       .choice {
-        min-height: 58px;
+        min-height: 44px;
         background: #2f5f4b;
         color: var(--ink);
-        padding: 8px 10px;
+        padding: 7px 8px;
       }
 
       .choice:hover,
@@ -379,12 +348,64 @@
         bottom: 0;
         left: 0;
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
         padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
         border-top: 1px solid rgba(255, 250, 240, 0.22);
         background: rgba(9, 39, 31, 0.94);
         backdrop-filter: blur(12px);
+      }
+
+      .rules-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        background: rgba(6, 20, 17, 0.7);
+      }
+
+      .rules-dialog {
+        width: min(100%, 520px);
+        max-height: min(86vh, 620px);
+        overflow: auto;
+        border: 1px solid rgba(255, 250, 240, 0.25);
+        border-radius: 8px;
+        background: #fffdf7;
+        color: #211b17;
+        padding: 18px;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+      }
+
+      .rules-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .rules-head h2 {
+        margin: 0;
+        font-size: 1.65rem;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .rules-close {
+        min-width: 44px;
+        background: #143527;
+        color: var(--ink);
+      }
+
+      .rules-dialog ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .rules-dialog li {
+        margin: 10px 0;
+        line-height: 1.35;
       }
 
       .main-button {
@@ -413,13 +434,18 @@
           right: 16px;
           bottom: auto;
           left: auto;
-          width: 132px;
+          width: 146px;
           grid-template-columns: 1fr;
           padding: 10px;
           border: 1px solid rgba(255, 250, 240, 0.22);
           border-radius: 8px;
           background: rgba(9, 39, 31, 0.92);
           transform: translateY(-50%);
+        }
+
+        .action-bar.choosing .turn-actions,
+        .global-actions {
+          grid-template-columns: 1fr;
         }
       }
 
@@ -546,7 +572,7 @@
 
       @media (max-width: 760px) {
         .app {
-          padding: 10px 8px 96px;
+          padding: 10px 8px 144px;
         }
 
         header {
@@ -639,7 +665,8 @@
         }
 
         .pile {
-          min-height: var(--mobile-pile-height, 170px);
+          min-height: var(--pile-height, 170px);
+          height: var(--pile-height, 170px);
           padding: 4px;
           border-radius: 6px;
         }
@@ -654,14 +681,14 @@
         }
 
         .cards {
-          gap: var(--mobile-card-gap, 3px);
+          gap: var(--card-gap, 3px);
           margin-top: 5px;
         }
 
         .card {
-          min-height: var(--mobile-card-height, 46px);
-          height: var(--mobile-card-height, 46px);
-          padding: var(--mobile-card-pad, 4px);
+          min-height: var(--card-height, 46px);
+          height: var(--card-height, 46px);
+          padding: var(--card-pad-y, 4px) var(--card-pad-x, 4px);
           border-radius: 6px;
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
         }
@@ -669,29 +696,20 @@
         .card-top {
           align-items: center;
           gap: 2px;
-          font-size: var(--mobile-rank-size, 0.74rem);
+          font-size: var(--rank-size, 0.74rem);
         }
 
         .suit {
-          font-size: var(--mobile-suit-size, 1.34rem);
+          font-size: var(--suit-size, 1.34rem);
         }
 
-        .decision {
-          gap: 8px;
-          margin-top: 10px;
-          padding: 10px;
-        }
-
-        .decision h2 {
-          font-size: 1.35rem;
-        }
-
-        .decision {
-          grid-template-columns: 1fr;
-        }
-
-        .choices {
-          grid-template-columns: 1fr;
+        .choice,
+        .main-button,
+        .accent-button,
+        .stop-button {
+          padding-right: 5px;
+          padding-left: 5px;
+          font-size: 0.76rem;
         }
       }
     </style>
@@ -728,16 +746,19 @@
           {
             id: "lowest-three",
             label: "Lowest 3",
+            shortLabel: "L3",
             indices: (length) => [length - 3, length - 2, length - 1],
           },
           {
             id: "lowest-two-highest-one",
             label: "Lowest 2 + highest 1",
+            shortLabel: "L2+H1",
             indices: (length) => [0, length - 2, length - 1],
           },
           {
             id: "lowest-one-highest-two",
             label: "Lowest 1 + highest 2",
+            shortLabel: "L1+H2",
             indices: (length) => [0, 1, length - 1],
           },
         ];
@@ -757,8 +778,10 @@
         const app = document.querySelector("[data-app]");
         let state = null;
         let autoplaying = false;
+        let autoplayResumePending = false;
         let autoplaySpeed = "normal";
         let autoplayTimer = 0;
+        let rulesOpen = false;
 
         function createStandardDeck() {
           let count = 0;
@@ -790,6 +813,7 @@
 
         function startGame() {
           clearAutoplay();
+          rulesOpen = false;
           const deck = shuffleDeck(createStandardDeck()).map((card, index) => ({
             ...card,
             id: `${card.id}-${index}`,
@@ -840,7 +864,13 @@
         }
 
         function dealOneCard() {
-          clearAutoplay();
+          const resumeAfterDecision = autoplayResumePending && state.pendingChoice;
+          if (resumeAfterDecision) {
+            window.clearTimeout(autoplayTimer);
+          } else {
+            clearAutoplay();
+          }
+
           if (state.result !== "playing") return;
 
           if (state.pendingChoice) {
@@ -849,6 +879,7 @@
             dealCardToPile(false);
           }
 
+          if (resumeAfterDecision && resumeAutoplayAfterDecision()) return;
           render();
         }
 
@@ -901,7 +932,13 @@
         }
 
         function choosePickup(patternId) {
-          clearAutoplay();
+          const resumeAfterDecision = autoplayResumePending;
+          if (resumeAfterDecision) {
+            window.clearTimeout(autoplayTimer);
+          } else {
+            clearAutoplay();
+          }
+
           if (!state.pendingChoice || state.result !== "playing") {
             state.notice = { text: "Illegal play.", tone: "illegal" };
             render();
@@ -921,6 +958,7 @@
 
           applyPickup(pending.pileIndex, attempt, `Picked up from pile ${pending.pileId}.`);
           waitForPickup(pending.pileIndex, false);
+          if (resumeAfterDecision && resumeAutoplayAfterDecision()) return;
           render();
         }
 
@@ -969,7 +1007,7 @@
         }
 
         function toggleAutoplay() {
-          if (autoplaying) {
+          if (autoplaying || autoplayResumePending) {
             clearAutoplay();
             render();
             return;
@@ -978,6 +1016,7 @@
           if (state.result !== "playing") return;
 
           if (autoplayShouldPause()) {
+            pauseAutoplayForChoice();
             state.notice = { text: "Manual choice needed.", tone: "neutral" };
             render();
             return;
@@ -1002,7 +1041,7 @@
             }
 
             if (autoplayShouldPause()) {
-              clearAutoplay();
+              pauseAutoplayForChoice();
               state.notice = { text: "Manual choice needed.", tone: "neutral" };
               render();
               return;
@@ -1018,7 +1057,7 @@
             }
 
             if (autoplayShouldPause()) {
-              clearAutoplay();
+              pauseAutoplayForChoice();
               state.notice = { text: "Manual choice needed.", tone: "neutral" };
               render();
               return;
@@ -1028,9 +1067,36 @@
           }, SPEEDS[autoplaySpeed].delay);
         }
 
-        function clearAutoplay() {
+        function clearAutoplay(keepResume = false) {
           autoplaying = false;
           window.clearTimeout(autoplayTimer);
+          if (!keepResume) autoplayResumePending = false;
+        }
+
+        function pauseAutoplayForChoice() {
+          clearAutoplay(true);
+          autoplayResumePending = true;
+        }
+
+        function resumeAutoplayAfterDecision() {
+          if (!autoplayResumePending) return false;
+
+          if (state.result !== "playing") {
+            clearAutoplay();
+            return false;
+          }
+
+          if (autoplayShouldPause()) {
+            state.notice = { text: "Manual choice needed.", tone: "neutral" };
+            render();
+            return true;
+          }
+
+          autoplayResumePending = false;
+          autoplaying = true;
+          render();
+          scheduleAutoplay();
+          return true;
         }
 
         function setSpeed(speed) {
@@ -1176,15 +1242,16 @@
           const status = resultLabel(state.result);
           const canPlay = state.result === "playing";
           const autoplayActive = autoplaying && canPlay && !autoplayShouldPause();
+          const autoplayEngaged = canPlay && (autoplaying || autoplayResumePending);
           const recentCards = new Set(state.lastAction?.cardIds ?? []);
           const notice = autoplayActive
             ? { text: "Autoplay running", tone: "neutral" }
             : state.notice ?? { text: "Ready.", tone: "neutral" };
           const showPickup = state.pendingChoice && !autoplayActive;
+          const nextCardDisabled = !canPlay || (autoplaying && !showPickup);
 
           app.style.setProperty("--pile-count", Math.max(state.piles.length, 1));
           app.innerHTML = `
-            <a class="top-link" href="/">Simon Freedman</a>
             <header>
               <h1>10-20-30 Solitaire</h1>
               <section class="stats" aria-label="Game status">
@@ -1233,39 +1300,34 @@
               </div>
             </section>
 
-            ${
-              showPickup
-                ? `
-                  <section class="decision" aria-live="polite">
-                    <div>
-                      <p>Pile ${state.pendingChoice.pileId}</p>
-                      <h2>Pick Up</h2>
-                    </div>
-                    <div class="choices">
-                      ${PICKUP_PATTERNS.map(
+            ${state.result === "win" ? winHTML() : ""}
+            ${rulesOpen ? rulesHTML() : ""}
+
+            <nav class="action-bar ${showPickup ? "choosing" : ""}" aria-label="Game controls">
+              <div class="turn-actions">
+                <button class="main-button" type="button" data-deal ${nextCardDisabled ? "disabled" : ""}>Next Card</button>
+                ${
+                  showPickup
+                    ? PICKUP_PATTERNS.map(
                         (pattern) => `
-                          <button class="choice" type="button" data-pickup="${pattern.id}">
-                            ${pattern.label}
+                          <button class="choice" type="button" data-pickup="${pattern.id}" aria-label="${pattern.label}">
+                            ${pattern.shortLabel}
                           </button>
                         `,
-                      ).join("")}
-                    </div>
-                  </section>
-                `
-                : ""
-            }
-
-            ${state.result === "win" ? winHTML() : ""}
-
-            <nav class="action-bar" aria-label="Game controls">
-              <button class="main-button" type="button" data-new>New</button>
-              <button class="main-button" type="button" data-deal ${!canPlay || autoplayActive ? "disabled" : ""}>Deal</button>
+                      ).join("")
+                    : ""
+                }
+              </div>
+              <div class="global-actions">
+                <button class="main-button" type="button" data-new>New</button>
               <button
-                class="${autoplayActive ? "stop-button" : "accent-button"}"
+                class="${autoplayEngaged ? "stop-button" : "accent-button"}"
                 type="button"
                 data-autoplay
                 ${!canPlay ? "disabled" : ""}
-              >${autoplayActive ? "Stop" : "Autoplay"}</button>
+              >${autoplayEngaged ? "Stop" : "Autoplay"}</button>
+                <button class="main-button" type="button" data-rules>Rules</button>
+              </div>
             </nav>
           `;
 
@@ -1282,33 +1344,56 @@
         }
 
         function pileStyle(cardCount) {
-          if (!window.matchMedia("(max-width: 760px)").matches) {
-            return "";
-          }
-
+          const isMobile = window.matchMedia("(max-width: 760px)").matches;
           const count = Math.max(cardCount, 1);
           const viewportHeight = window.innerHeight || 760;
-          const maxPileHeight = Math.max(150, Math.min(520, viewportHeight - 360));
-          const gap = count > 10 ? 2 : 3;
-          const availableCardHeight =
-            maxPileHeight - 28 - gap * Math.max(count - 1, 0);
-          const cardHeight = Math.max(
-            12,
-            Math.min(46, Math.floor(availableCardHeight / count)),
+          const reservedHeight = isMobile
+            ? state.pendingChoice
+              ? 360
+              : 286
+            : 382;
+          const minPileHeight = isMobile ? 128 : 180;
+          const comfortablePileHeight = isMobile ? 128 : 270;
+          const maxPileHeight = Math.max(
+            minPileHeight,
+            Math.min(isMobile ? 520 : 560, viewportHeight - reservedHeight),
           );
-          const cardPad = cardHeight < 20 ? 1 : cardHeight < 30 ? 2 : 4;
-          const rankSize = Math.max(0.46, Math.min(0.74, cardHeight / 62));
-          const suitSize = Math.max(0.72, Math.min(1.34, cardHeight / 34));
-          const pileHeight =
-            28 + cardHeight * count + gap * Math.max(count - 1, 0);
+          const defaultCardHeight = isMobile ? 46 : 76;
+          const minCardHeight = isMobile ? 4 : 6;
+          const defaultGap = isMobile ? 3 : 7;
+          const gap = count > 18 ? 1 : count > 10 ? 2 : defaultGap;
+          const chromeHeight = isMobile ? 24 : 48;
+          const availableCardHeight =
+            maxPileHeight - chromeHeight - gap * Math.max(count - 1, 0);
+          const cardHeight = Math.max(
+            minCardHeight,
+            Math.min(defaultCardHeight, Math.floor(availableCardHeight / count)),
+          );
+          const cardPadY = cardHeight < 16 ? 1 : cardHeight < 28 ? 2 : isMobile ? 4 : 8;
+          const cardPadX = cardHeight < 16 ? 1 : cardHeight < 28 ? 2 : isMobile ? 4 : 9;
+          const rankSize = Math.max(
+            isMobile ? 0.36 : 0.46,
+            Math.min(isMobile ? 0.74 : 1.2, cardHeight / (isMobile ? 62 : 64)),
+          );
+          const suitSize = Math.max(
+            isMobile ? 0.42 : 0.52,
+            Math.min(isMobile ? 1.34 : 2.3, cardHeight / (isMobile ? 34 : 32)),
+          );
+          const naturalPileHeight =
+            chromeHeight + cardHeight * count + gap * Math.max(count - 1, 0);
+          const pileHeight = Math.min(
+            maxPileHeight,
+            Math.max(Math.min(comfortablePileHeight, maxPileHeight), naturalPileHeight),
+          );
 
           return [
-            `--mobile-pile-height:${Math.ceil(pileHeight)}px`,
-            `--mobile-card-height:${cardHeight}px`,
-            `--mobile-card-gap:${gap}px`,
-            `--mobile-card-pad:${cardPad}px`,
-            `--mobile-rank-size:${rankSize.toFixed(2)}rem`,
-            `--mobile-suit-size:${suitSize.toFixed(2)}rem`,
+            `--pile-height:${Math.ceil(pileHeight)}px`,
+            `--card-height:${cardHeight}px`,
+            `--card-gap:${gap}px`,
+            `--card-pad-y:${cardPadY}px`,
+            `--card-pad-x:${cardPadX}px`,
+            `--rank-size:${rankSize.toFixed(2)}rem`,
+            `--suit-size:${suitSize.toFixed(2)}rem`,
           ].join(";");
         }
 
@@ -1358,10 +1443,43 @@
           `;
         }
 
+        function rulesHTML() {
+          return `
+            <section class="rules-layer" data-rules-close aria-modal="true" role="dialog" aria-labelledby="rules-title">
+              <div class="rules-dialog">
+                <div class="rules-head">
+                  <h2 id="rules-title">Rules</h2>
+                  <button class="rules-close" type="button" data-rules-close aria-label="Close rules">X</button>
+                </div>
+                <ul>
+                  <li>Deal one card at a time to the current pile, moving from left to right through the remaining piles.</li>
+                  <li>When a pile has at least three cards, you may pick L3, L2+H1, or L1+H2 if the selected cards total 10, 20, or 30.</li>
+                  <li>L means the lowest cards on the screen. H means the highest cards on the screen.</li>
+                  <li>Aces count 1, cards 2 through 9 count face value, and 10/J/Q/K count 10.</li>
+                  <li>Picked-up cards go under the stock. Skipping a legal pickup adds one miss.</li>
+                  <li>Clear every pile to win. Running out of stock loses. Repeating a previous position is a draw.</li>
+                </ul>
+              </div>
+            </section>
+          `;
+        }
+
         function bindControls() {
           app.querySelector("[data-new]")?.addEventListener("click", startGame);
           app.querySelector("[data-deal]")?.addEventListener("click", dealOneCard);
           app.querySelector("[data-autoplay]")?.addEventListener("click", toggleAutoplay);
+          app.querySelector("[data-rules]")?.addEventListener("click", () => {
+            rulesOpen = true;
+            render();
+          });
+          app.querySelectorAll("[data-rules-close]").forEach((element) => {
+            element.addEventListener("click", (event) => {
+              if (event.target === element) {
+                rulesOpen = false;
+                render();
+              }
+            });
+          });
           app.querySelectorAll("[data-speed]").forEach((button) => {
             button.addEventListener("click", () => setSpeed(button.dataset.speed));
           });
@@ -1378,6 +1496,13 @@
               render();
             }
           }, 100);
+        });
+
+        window.addEventListener("keydown", (event) => {
+          if (event.key === "Escape" && rulesOpen) {
+            rulesOpen = false;
+            render();
+          }
         });
 
         startGame();
