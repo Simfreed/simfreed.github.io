@@ -776,23 +776,33 @@
             cards: [],
           }));
 
-          for (let index = 0; index < 7; index += 1) {
-            const card = deck.shift();
-            if (card) {
-              piles[index].cards.push(card);
+          let dealCount = 0;
+          for (let row = 0; row < 2; row += 1) {
+            for (let index = 0; index < 7; index += 1) {
+              const card = deck.shift();
+              if (card) {
+                piles[index].cards.push(card);
+                dealCount += 1;
+              }
             }
+          }
+
+          const openingCard = deck.shift();
+          if (openingCard) {
+            piles[0].cards.push(openingCard);
+            dealCount += 1;
           }
 
           state = {
             deck,
             piles,
             nextPileIndex: 0,
-            dealCount: 7,
+            dealCount,
             missCount: 0,
             result: "playing",
-            pendingChoice: null,
+            pendingChoice: { pileId: piles[0].id, pileIndex: 0 },
             seenStates: new Set(),
-            notice: { text: "Seven piles dealt.", tone: "neutral" },
+            notice: { text: "Check pile 1.", tone: "neutral" },
             lastAction: null,
           };
           markSeen();
