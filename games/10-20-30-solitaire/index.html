@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>10-20-30 Solitaire</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --felt: #0f3d2f;
+        --felt-deep: #09271f;
+        --felt-light: #1d684f;
+        --ink: #fffaf0;
+        --muted: #cde6da;
+        --paper: #fffdf7;
+        --paper-ink: #211b17;
+        --red: #b12133;
+        --gold: #f2c14e;
+        --amber: #ffd27d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 50% -10%, rgba(255, 250, 240, 0.12), transparent 36rem),
+          linear-gradient(180deg, var(--felt-light), var(--felt) 22rem, var(--felt-deep));
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button {
+        min-height: 44px;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 800;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+      }
+
+      .app {
+        width: min(100%, 1180px);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 16px 16px 104px;
+      }
+
+      .top-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        margin-bottom: 10px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .top-link:hover,
+      .top-link:focus-visible {
+        color: var(--ink);
+        text-decoration: underline;
+      }
+
+      header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(255, 250, 240, 0.24);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 8vw, 4.4rem);
+        line-height: 0.92;
+        letter-spacing: 0;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(68px, 1fr));
+        gap: 8px;
+        width: min(100%, 460px);
+      }
+
+      .stat {
+        min-width: 0;
+        border: 1px solid rgba(255, 250, 240, 0.22);
+        border-radius: 8px;
+        background: rgba(255, 250, 240, 0.1);
+        padding: 8px 10px;
+        text-align: center;
+      }
+
+      .stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.7rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .stat strong {
+        display: block;
+        overflow: hidden;
+        margin-top: 2px;
+        font-size: clamp(0.9rem, 2.8vw, 1.15rem);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .stat.result strong {
+        color: var(--gold);
+      }
+
+      .strip {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+        margin-top: 14px;
+      }
+
+      .stock {
+        position: relative;
+        width: 74px;
+        height: 98px;
+      }
+
+      .stock::before,
+      .stock::after {
+        position: absolute;
+        inset: 8px 0 0 8px;
+        border: 2px solid rgba(255, 250, 240, 0.45);
+        border-radius: 10px;
+        content: "";
+      }
+
+      .stock::after {
+        inset: 4px 4px 4px 4px;
+      }
+
+      .stock-card {
+        position: absolute;
+        inset: 0 10px 10px 0;
+        display: grid;
+        place-items: center;
+        border: 2px solid rgba(255, 250, 240, 0.7);
+        border-radius: 10px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.12) 25%, transparent 25% 50%, rgba(255, 255, 255, 0.12) 50% 75%, transparent 75%),
+          #163f62;
+        background-size: 22px 22px;
+        box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+        color: var(--ink);
+        font-size: 1.3rem;
+        font-weight: 950;
+      }
+
+      .stock.running .stock-card {
+        animation: stock-pulse 0.7s ease-in-out infinite alternate;
+      }
+
+      .notice {
+        display: flex;
+        align-items: center;
+        min-height: 70px;
+        border: 1px solid rgba(255, 250, 240, 0.22);
+        border-radius: 8px;
+        background: rgba(255, 250, 240, 0.1);
+        padding: 14px 16px;
+        font-size: clamp(1rem, 3.6vw, 1.25rem);
+        font-weight: 900;
+      }
+
+      .notice.success {
+        border-color: rgba(242, 193, 78, 0.7);
+        color: var(--amber);
+      }
+
+      .notice.illegal {
+        border-color: rgba(255, 170, 165, 0.9);
+        color: #ffd4ce;
+        animation: shake 0.24s linear 1;
+      }
+
+      .speed-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .speed-control > span {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .speed-options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        width: min(100%, 360px);
+      }
+
+      .speed-button {
+        border: 1px solid rgba(255, 250, 240, 0.2);
+        background: rgba(255, 250, 240, 0.1);
+        color: var(--ink);
+        font-size: 0.9rem;
+      }
+
+      .speed-button.selected {
+        background: var(--ink);
+        color: #143527;
+      }
+
+      .board-scroll {
+        overflow-x: auto;
+        margin-top: 16px;
+        padding-bottom: 14px;
+      }
+
+      .piles {
+        display: grid;
+        grid-template-columns: repeat(var(--pile-count), minmax(136px, 1fr));
+        gap: 10px;
+        min-width: max-content;
+      }
+
+      .pile {
+        min-height: 270px;
+        border: 1px solid rgba(255, 250, 240, 0.22);
+        border-radius: 8px;
+        background: rgba(7, 28, 23, 0.38);
+        padding: 10px;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+      }
+
+      .pile.active {
+        border-color: rgba(242, 193, 78, 0.9);
+        box-shadow:
+          inset 0 0 0 1px rgba(242, 193, 78, 0.5),
+          0 0 0 2px rgba(242, 193, 78, 0.18);
+      }
+
+      .pile.recent {
+        background: rgba(255, 250, 240, 0.12);
+      }
+
+      .pile-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 900;
+      }
+
+      .cards {
+        display: grid;
+        gap: 7px;
+        margin-top: 10px;
+      }
+
+      .card {
+        min-height: 76px;
+        border: 1px solid rgba(36, 30, 24, 0.2);
+        border-radius: 8px;
+        background: var(--paper);
+        color: var(--paper-ink);
+        padding: 8px 9px;
+        box-shadow: 0 7px 14px rgba(0, 0, 0, 0.19);
+      }
+
+      .card.red {
+        color: var(--red);
+      }
+
+      .card.recent {
+        animation: card-in 0.28s ease-out 1;
+      }
+
+      .card-top {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 1.2rem;
+        font-weight: 950;
+      }
+
+      .suit {
+        font-size: 2.3rem;
+        line-height: 0.76;
+      }
+
+      .value {
+        margin-top: 8px;
+        color: #665b4e;
+        font-size: 0.72rem;
+        font-weight: 950;
+        text-transform: uppercase;
+      }
+
+      .card.red .value {
+        color: #8a3440;
+      }
+
+      .empty {
+        display: grid;
+        min-height: 270px;
+        place-items: center;
+        border: 1px dashed rgba(255, 250, 240, 0.4);
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 1.35rem;
+        font-weight: 950;
+      }
+
+      .decision {
+        display: grid;
+        grid-template-columns: minmax(120px, 0.5fr) minmax(0, 1.5fr);
+        gap: 14px;
+        align-items: center;
+        margin-top: 16px;
+        border-radius: 8px;
+        background: #fff4d1;
+        color: #2b2118;
+        padding: 14px;
+        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
+      }
+
+      .decision p {
+        margin: 0;
+        color: #7b341e;
+        font-size: 0.78rem;
+        font-weight: 950;
+        text-transform: uppercase;
+      }
+
+      .decision h2 {
+        margin: 2px 0 0;
+        font-size: 1.8rem;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .choices {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .choice {
+        min-height: 58px;
+        background: #2f5f4b;
+        color: var(--ink);
+        padding: 8px 10px;
+      }
+
+      .choice:hover,
+      .choice:focus-visible {
+        background: #234b3b;
+      }
+
+      .action-bar {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        border-top: 1px solid rgba(255, 250, 240, 0.22);
+        background: rgba(9, 39, 31, 0.94);
+        backdrop-filter: blur(12px);
+      }
+
+      .main-button {
+        background: var(--ink);
+        color: #123829;
+      }
+
+      .accent-button {
+        background: var(--gold);
+        color: #2d2111;
+      }
+
+      .stop-button {
+        background: #ffe0dc;
+        color: #6b171d;
+      }
+
+      .win-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 4;
+        display: grid;
+        place-items: center;
+        pointer-events: none;
+      }
+
+      .win-card {
+        position: relative;
+        display: grid;
+        gap: 10px;
+        min-width: min(88vw, 390px);
+        border: 2px solid rgba(242, 193, 78, 0.9);
+        border-radius: 8px;
+        background: rgba(15, 61, 47, 0.95);
+        padding: 26px 22px;
+        text-align: center;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
+      }
+
+      .win-title {
+        font-size: clamp(2.8rem, 16vw, 5.4rem);
+        font-weight: 950;
+        line-height: 0.88;
+      }
+
+      .win-subtitle {
+        color: var(--amber);
+        font-size: 1rem;
+        font-weight: 900;
+      }
+
+      .fan {
+        display: flex;
+        justify-content: center;
+        height: 84px;
+      }
+
+      .fan span {
+        display: grid;
+        width: 58px;
+        height: 78px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--paper);
+        color: #143527;
+        font-size: 1.35rem;
+        font-weight: 950;
+        box-shadow: 0 12px 18px rgba(0, 0, 0, 0.22);
+      }
+
+      .fan span:nth-child(1) {
+        transform: translateX(14px) rotate(-13deg);
+      }
+
+      .fan span:nth-child(2) {
+        z-index: 1;
+      }
+
+      .fan span:nth-child(3) {
+        transform: translateX(-14px) rotate(13deg);
+      }
+
+      .confetti {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .confetti i {
+        position: absolute;
+        top: -18px;
+        width: 8px;
+        height: 18px;
+        border-radius: 2px;
+        background: var(--gold);
+        animation: confetti 1.9s linear infinite;
+      }
+
+      .confetti i:nth-child(3n) {
+        background: #79d2c0;
+      }
+
+      .confetti i:nth-child(4n) {
+        background: #ff8f70;
+      }
+
+      .confetti i:nth-child(5n) {
+        background: #f7f0a1;
+      }
+
+      @keyframes stock-pulse {
+        to {
+          transform: translateY(-4px);
+        }
+      }
+
+      @keyframes card-in {
+        from {
+          transform: translateY(-14px) scale(0.96);
+          opacity: 0.2;
+        }
+      }
+
+      @keyframes shake {
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      @keyframes confetti {
+        to {
+          transform: translateY(112vh) rotate(520deg);
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app {
+          padding-inline: 12px;
+        }
+
+        header {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .stats {
+          width: 100%;
+        }
+
+        .strip {
+          grid-template-columns: 64px minmax(0, 1fr);
+        }
+
+        .stock {
+          width: 64px;
+          height: 88px;
+        }
+
+        .piles {
+          grid-template-columns: repeat(var(--pile-count), minmax(118px, 1fr));
+        }
+
+        .decision {
+          grid-template-columns: 1fr;
+        }
+
+        .choices {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app" data-app></main>
+
+    <script>
+      (() => {
+        const SUITS = [
+          { id: "spades", symbol: "♠", red: false },
+          { id: "hearts", symbol: "♥", red: true },
+          { id: "diamonds", symbol: "♦", red: true },
+          { id: "clubs", symbol: "♣", red: false },
+        ];
+
+        const RANKS = [
+          ["A", 1],
+          ["2", 2],
+          ["3", 3],
+          ["4", 4],
+          ["5", 5],
+          ["6", 6],
+          ["7", 7],
+          ["8", 8],
+          ["9", 9],
+          ["10", 10],
+          ["J", 10],
+          ["Q", 10],
+          ["K", 10],
+        ];
+
+        const PICKUP_PATTERNS = [
+          {
+            id: "lowest-three",
+            label: "Lowest 3",
+            indices: (length) => [length - 3, length - 2, length - 1],
+          },
+          {
+            id: "lowest-two-highest-one",
+            label: "Lowest 2 + highest 1",
+            indices: (length) => [0, length - 2, length - 1],
+          },
+          {
+            id: "lowest-one-highest-two",
+            label: "Lowest 1 + highest 2",
+            indices: (length) => [0, 1, length - 1],
+          },
+        ];
+
+        const AUTOPLAY_PATTERN_ORDER = [
+          "lowest-one-highest-two",
+          "lowest-two-highest-one",
+          "lowest-three",
+        ];
+
+        const SPEEDS = {
+          slow: { label: "Slow", delay: 1100 },
+          normal: { label: "Normal", delay: 650 },
+          fast: { label: "Fast", delay: 250 },
+        };
+
+        const app = document.querySelector("[data-app]");
+        let state = null;
+        let autoplaying = false;
+        let autoplaySpeed = "normal";
+        let autoplayTimer = 0;
+
+        function createStandardDeck() {
+          let count = 0;
+          return SUITS.flatMap((suit) =>
+            RANKS.map(([rank, value]) => ({
+              id: `${suit.id}-${rank}-${count++}`,
+              rank,
+              value,
+              suit: suit.id,
+              symbol: suit.symbol,
+              red: suit.red,
+            })),
+          );
+        }
+
+        function shuffleDeck(cards) {
+          const shuffled = cards.map((card, index) => ({
+            ...card,
+            id: `${card.id}-shuffle-${index}`,
+          }));
+
+          for (let index = shuffled.length - 1; index > 0; index -= 1) {
+            const swapIndex = Math.floor(Math.random() * (index + 1));
+            [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+          }
+
+          return shuffled;
+        }
+
+        function startGame() {
+          clearAutoplay();
+          const deck = shuffleDeck(createStandardDeck()).map((card, index) => ({
+            ...card,
+            id: `${card.id}-${index}`,
+          }));
+          const piles = Array.from({ length: 7 }, (_, index) => ({
+            id: index + 1,
+            cards: [],
+          }));
+
+          for (let index = 0; index < 7; index += 1) {
+            const card = deck.shift();
+            if (card) {
+              piles[index].cards.push(card);
+            }
+          }
+
+          state = {
+            deck,
+            piles,
+            nextPileIndex: 0,
+            dealCount: 7,
+            result: "playing",
+            pendingChoice: null,
+            seenStates: new Set(),
+            notice: { text: "Seven piles dealt.", tone: "neutral" },
+            lastAction: null,
+          };
+          markSeen();
+          render();
+        }
+
+        function resultLabel(result) {
+          if (result === "win") return "Win";
+          if (result === "loss") return "Loss";
+          if (result === "draw") return "Draw";
+          return "Playing";
+        }
+
+        function dealOneCard() {
+          clearAutoplay();
+          if (state.result !== "playing") return;
+
+          if (state.pendingChoice) {
+            dealAfterManualCheck();
+          } else {
+            dealCardToPile(false);
+          }
+
+          render();
+        }
+
+        function dealAfterManualCheck() {
+          const pending = state.pendingChoice;
+          if (!pending) {
+            dealCardToPile(false);
+            return;
+          }
+
+          const pile = state.piles[pending.pileIndex];
+          if (pile && legalPickups(pile).length > 0) {
+            state.notice = { text: "Illegal play.", tone: "illegal" };
+            state.lastAction = { type: "illegal", pileId: pending.pileId, cardIds: [] };
+            return;
+          }
+
+          state.pendingChoice = null;
+          state.notice = null;
+          state.lastAction = { type: "pass", pileId: pending.pileId, cardIds: [] };
+          finishTurn(pending.pileIndex);
+
+          if (state.result === "playing") {
+            dealCardToPile(false);
+          }
+        }
+
+        function dealCardToPile(isAutoplay) {
+          if (state.piles.length === 0) {
+            setResult("win", "All piles cleared.");
+            return;
+          }
+
+          if (state.deck.length === 0) {
+            setResult("loss", "No card left to deal.");
+            return;
+          }
+
+          const pileIndex = Math.min(state.nextPileIndex, state.piles.length - 1);
+          const pile = state.piles[pileIndex];
+          const card = state.deck.shift();
+          pile.cards.push(card);
+          state.dealCount += 1;
+          state.notice = {
+            text: `${isAutoplay ? "Autoplay dealt" : "Dealt"} to pile ${pile.id}.`,
+            tone: "neutral",
+          };
+          state.lastAction = { type: "deal", pileId: pile.id, cardIds: [card.id] };
+
+          waitForPickup(pileIndex, isAutoplay);
+        }
+
+        function choosePickup(patternId) {
+          clearAutoplay();
+          if (!state.pendingChoice || state.result !== "playing") {
+            state.notice = { text: "Illegal play.", tone: "illegal" };
+            render();
+            return;
+          }
+
+          const pending = state.pendingChoice;
+          const pile = state.piles[pending.pileIndex];
+          const attempt = buildPickupAttempt(pile, patternForId(patternId));
+
+          if (!attempt.isLegal) {
+            state.notice = { text: "Illegal play.", tone: "illegal" };
+            state.lastAction = { type: "illegal", pileId: pending.pileId, cardIds: [] };
+            render();
+            return;
+          }
+
+          applyPickup(pending.pileIndex, attempt, `Picked up from pile ${pending.pileId}.`);
+          waitForPickup(pending.pileIndex, false);
+          render();
+        }
+
+        function autoplayStep() {
+          if (state.result !== "playing") return;
+
+          if (state.pendingChoice) {
+            resolveAutoplayPickup();
+          } else {
+            dealCardToPile(true);
+          }
+        }
+
+        function resolveAutoplayPickup() {
+          const pending = state.pendingChoice;
+          const pile = pending ? state.piles[pending.pileIndex] : null;
+
+          if (!pending || !pile || pile.cards.length < 3) {
+            if (pending) finishTurn(pending.pileIndex);
+            return;
+          }
+
+          const options = legalPickups(pile);
+
+          if (options.length === 0) {
+            state.pendingChoice = null;
+            state.notice = { text: `No pickup from pile ${pending.pileId}.`, tone: "neutral" };
+            state.lastAction = { type: "pass", pileId: pending.pileId, cardIds: [] };
+            finishTurn(pending.pileIndex);
+            return;
+          }
+
+          if (options.length > 1) {
+            state.notice = { text: "Manual choice needed.", tone: "neutral" };
+            return;
+          }
+
+          applyPickup(pending.pileIndex, options[0], `Autoplay picked up from pile ${pending.pileId}.`);
+          waitForPickup(pending.pileIndex, true);
+        }
+
+        function autoplayShouldPause() {
+          if (state.result !== "playing" || !state.pendingChoice) return false;
+          const pile = state.piles[state.pendingChoice.pileIndex];
+          return pile ? legalPickups(pile).length > 1 : false;
+        }
+
+        function toggleAutoplay() {
+          if (autoplaying) {
+            clearAutoplay();
+            render();
+            return;
+          }
+
+          if (state.result !== "playing") return;
+
+          if (autoplayShouldPause()) {
+            state.notice = { text: "Manual choice needed.", tone: "neutral" };
+            render();
+            return;
+          }
+
+          autoplaying = true;
+          render();
+          scheduleAutoplay();
+        }
+
+        function scheduleAutoplay() {
+          window.clearTimeout(autoplayTimer);
+          if (!autoplaying) return;
+
+          autoplayTimer = window.setTimeout(() => {
+            if (!autoplaying) return;
+
+            if (state.result !== "playing") {
+              clearAutoplay();
+              render();
+              return;
+            }
+
+            if (autoplayShouldPause()) {
+              clearAutoplay();
+              state.notice = { text: "Manual choice needed.", tone: "neutral" };
+              render();
+              return;
+            }
+
+            autoplayStep();
+            render();
+
+            if (state.result !== "playing") {
+              clearAutoplay();
+              render();
+              return;
+            }
+
+            if (autoplayShouldPause()) {
+              clearAutoplay();
+              state.notice = { text: "Manual choice needed.", tone: "neutral" };
+              render();
+              return;
+            }
+
+            scheduleAutoplay();
+          }, SPEEDS[autoplaySpeed].delay);
+        }
+
+        function clearAutoplay() {
+          autoplaying = false;
+          window.clearTimeout(autoplayTimer);
+        }
+
+        function setSpeed(speed) {
+          autoplaySpeed = speed;
+          if (autoplaying) scheduleAutoplay();
+          render();
+        }
+
+        function waitForPickup(pileIndex, isAutoplay) {
+          const pile = state.piles[pileIndex];
+
+          if (!pile || pile.cards.length < 3) {
+            state.pendingChoice = null;
+            finishTurn(pileIndex);
+            return;
+          }
+
+          state.pendingChoice = {
+            pileId: pile.id,
+            pileIndex,
+          };
+
+          if (!isAutoplay && state.notice?.tone !== "success" && state.notice?.tone !== "illegal") {
+            state.notice = { text: `Check pile ${pile.id}.`, tone: "neutral" };
+          }
+        }
+
+        function applyPickup(pileIndex, option, message) {
+          const pile = state.piles[pileIndex];
+          const selected = new Set(option.indices);
+          const collected = pile.cards.filter((_, index) => selected.has(index));
+          pile.cards = pile.cards.filter((_, index) => !selected.has(index));
+          state.deck.push(...collected);
+          state.pendingChoice = null;
+          state.notice = { text: message, tone: "success" };
+          state.lastAction = {
+            type: "pickup",
+            pileId: pile.id,
+            cardIds: collected.map((card) => card.id),
+          };
+        }
+
+        function finishTurn(pileIndex) {
+          let nextPileIndex = 0;
+
+          if (state.piles[pileIndex] && state.piles[pileIndex].cards.length === 0) {
+            const removedPile = state.piles.splice(pileIndex, 1)[0];
+
+            if (state.piles.length === 0) {
+              state.nextPileIndex = 0;
+              setResult("win", `Pile ${removedPile.id} cleared.`);
+              return;
+            }
+
+            nextPileIndex = pileIndex >= state.piles.length ? 0 : pileIndex;
+          } else {
+            nextPileIndex = state.piles.length ? (pileIndex + 1) % state.piles.length : 0;
+          }
+
+          state.nextPileIndex = nextPileIndex;
+          state.pendingChoice = null;
+
+          if (state.deck.length === 0) {
+            setResult("loss", "No card left to deal.");
+            return;
+          }
+
+          markSeen();
+        }
+
+        function markSeen() {
+          const signature = serializeState();
+          if (state.seenStates.has(signature)) {
+            setResult("draw", "A previous position returned.");
+            return;
+          }
+
+          state.seenStates.add(signature);
+        }
+
+        function setResult(result, message) {
+          state.result = result;
+          state.pendingChoice = null;
+          state.notice = {
+            text: message,
+            tone: result === "win" ? "success" : "neutral",
+          };
+          state.lastAction = null;
+        }
+
+        function legalPickups(pile) {
+          if (!pile || pile.cards.length < 3) return [];
+
+          const seenSelections = new Set();
+          const options = [];
+
+          for (const patternId of AUTOPLAY_PATTERN_ORDER) {
+            const attempt = buildPickupAttempt(pile, patternForId(patternId));
+            const key = attempt.indices.join("-");
+            if (seenSelections.has(key)) continue;
+            seenSelections.add(key);
+            if (attempt.isLegal) options.push(attempt);
+          }
+
+          return options;
+        }
+
+        function buildPickupAttempt(pile, pattern) {
+          const indices = pattern.indices(pile.cards.length);
+          const cards = indices
+            .filter((index) => index >= 0 && index < pile.cards.length)
+            .map((index) => pile.cards[index]);
+          const total = cards.reduce((sum, card) => sum + card.value, 0);
+
+          return {
+            id: pattern.id,
+            label: pattern.label,
+            indices,
+            cards,
+            total,
+            isLegal: cards.length === 3 && (total === 10 || total === 20 || total === 30),
+          };
+        }
+
+        function patternForId(patternId) {
+          const pattern = PICKUP_PATTERNS.find((candidate) => candidate.id === patternId);
+          if (!pattern) throw new Error(`Unknown pickup pattern: ${patternId}`);
+          return pattern;
+        }
+
+        function serializeState() {
+          return JSON.stringify({
+            deck: state.deck.map((card) => card.value),
+            piles: state.piles.map((pile) => pile.cards.map((card) => card.value)),
+            nextPileIndex: state.nextPileIndex,
+          });
+        }
+
+        function render() {
+          const activePileId =
+            state.pendingChoice?.pileId ?? state.piles[state.nextPileIndex]?.id ?? "-";
+          const activePileIndex = state.pendingChoice?.pileIndex ?? state.nextPileIndex;
+          const status = resultLabel(state.result);
+          const canPlay = state.result === "playing";
+          const autoplayActive = autoplaying && canPlay && !autoplayShouldPause();
+          const recentCards = new Set(state.lastAction?.cardIds ?? []);
+          const notice = autoplayActive
+            ? { text: "Autoplay running", tone: "neutral" }
+            : state.notice ?? { text: "Ready.", tone: "neutral" };
+          const showPickup = state.pendingChoice && !autoplayActive;
+
+          app.style.setProperty("--pile-count", Math.max(state.piles.length, 1));
+          app.innerHTML = `
+            <a class="top-link" href="/">Simon Freedman</a>
+            <header>
+              <h1>10-20-30 Solitaire</h1>
+              <section class="stats" aria-label="Game status">
+                ${statHTML("Status", status, state.result !== "playing")}
+                ${statHTML("Stock", String(state.deck.length))}
+                ${statHTML("Dealt", String(state.dealCount))}
+                ${statHTML("Pile", String(activePileId))}
+              </section>
+            </header>
+
+            <section class="strip" aria-live="polite">
+              <div class="stock ${autoplayActive ? "running" : ""}" aria-label="Stock cards">
+                <div class="stock-card">${state.deck.length}</div>
+              </div>
+              <div class="notice ${notice.tone}">${notice.text}</div>
+            </section>
+
+            <section class="speed-control" aria-label="Autoplay speed">
+              <span>Speed</span>
+              <div class="speed-options">
+                ${Object.entries(SPEEDS)
+                  .map(
+                    ([id, speed]) => `
+                      <button
+                        class="speed-button ${id === autoplaySpeed ? "selected" : ""}"
+                        type="button"
+                        data-speed="${id}"
+                        aria-pressed="${id === autoplaySpeed}"
+                      >${speed.label}</button>
+                    `,
+                  )
+                  .join("")}
+              </div>
+            </section>
+
+            <section class="board-scroll" aria-label="Solitaire piles">
+              <div class="piles">
+                ${
+                  state.piles.length
+                    ? state.piles
+                        .map((pile, index) => pileHTML(pile, index === activePileIndex, recentCards))
+                        .join("")
+                    : '<div class="empty">Cleared</div>'
+                }
+              </div>
+            </section>
+
+            ${
+              showPickup
+                ? `
+                  <section class="decision" aria-live="polite">
+                    <div>
+                      <p>Pile ${state.pendingChoice.pileId}</p>
+                      <h2>Pick Up</h2>
+                    </div>
+                    <div class="choices">
+                      ${PICKUP_PATTERNS.map(
+                        (pattern) => `
+                          <button class="choice" type="button" data-pickup="${pattern.id}">
+                            ${pattern.label}
+                          </button>
+                        `,
+                      ).join("")}
+                    </div>
+                  </section>
+                `
+                : ""
+            }
+
+            ${state.result === "win" ? winHTML() : ""}
+
+            <nav class="action-bar" aria-label="Game controls">
+              <button class="main-button" type="button" data-new>New</button>
+              <button class="main-button" type="button" data-deal ${!canPlay || autoplayActive ? "disabled" : ""}>Deal</button>
+              <button
+                class="${autoplayActive ? "stop-button" : "accent-button"}"
+                type="button"
+                data-autoplay
+                ${!canPlay ? "disabled" : ""}
+              >${autoplayActive ? "Stop" : "Autoplay"}</button>
+            </nav>
+          `;
+
+          bindControls();
+        }
+
+        function statHTML(label, value, resultTone = false) {
+          return `
+            <div class="stat ${resultTone ? "result" : ""}">
+              <span>${label}</span>
+              <strong>${value}</strong>
+            </div>
+          `;
+        }
+
+        function pileHTML(pile, active, recentCards) {
+          const recentPile = state.lastAction?.pileId === pile.id;
+          return `
+            <article class="pile ${active ? "active" : ""} ${recentPile ? "recent" : ""}">
+              <div class="pile-head">
+                <span>Pile ${pile.id}</span>
+                <span>${pile.cards.length}</span>
+              </div>
+              <div class="cards">
+                ${pile.cards.map((card) => cardHTML(card, recentCards.has(card.id))).join("")}
+              </div>
+            </article>
+          `;
+        }
+
+        function cardHTML(card, recent) {
+          return `
+            <div class="card ${card.red ? "red" : ""} ${recent ? "recent" : ""}">
+              <div class="card-top">
+                <span>${card.rank}</span>
+                <span class="suit">${card.symbol}</span>
+              </div>
+              <div class="value">value ${card.value}</div>
+            </div>
+          `;
+        }
+
+        function winHTML() {
+          return `
+            <section class="win-layer" aria-live="polite">
+              <div class="confetti" aria-hidden="true">
+                ${Array.from({ length: 28 }, (_, index) => {
+                  const left = (index * 37) % 100;
+                  const delay = ((index * 11) % 20) / -10;
+                  return `<i style="left:${left}%; animation-delay:${delay}s"></i>`;
+                }).join("")}
+              </div>
+              <div class="win-card">
+                <div class="fan" aria-hidden="true"><span>10</span><span>20</span><span>30</span></div>
+                <div class="win-title">Win</div>
+                <div class="win-subtitle">${state.dealCount} cards dealt</div>
+              </div>
+            </section>
+          `;
+        }
+
+        function bindControls() {
+          app.querySelector("[data-new]")?.addEventListener("click", startGame);
+          app.querySelector("[data-deal]")?.addEventListener("click", dealOneCard);
+          app.querySelector("[data-autoplay]")?.addEventListener("click", toggleAutoplay);
+          app.querySelectorAll("[data-speed]").forEach((button) => {
+            button.addEventListener("click", () => setSpeed(button.dataset.speed));
+          });
+          app.querySelectorAll("[data-pickup]").forEach((button) => {
+            button.addEventListener("click", () => choosePickup(button.dataset.pickup));
+          });
+        }
+
+        startGame();
+      })();
+    </script>
+  </body>
+</html>
