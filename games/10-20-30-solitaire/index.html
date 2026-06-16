@@ -96,9 +96,9 @@
 
       .stats {
         display: grid;
-        grid-template-columns: repeat(4, minmax(68px, 1fr));
+        grid-template-columns: repeat(5, minmax(62px, 1fr));
         gap: 8px;
-        width: min(100%, 460px);
+        width: min(100%, 560px);
       }
 
       .stat {
@@ -541,7 +541,7 @@
         }
 
         .stats {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 5px;
           width: 100%;
         }
@@ -788,6 +788,7 @@
             piles,
             nextPileIndex: 0,
             dealCount: 7,
+            missCount: 0,
             result: "playing",
             pendingChoice: null,
             seenStates: new Set(),
@@ -826,14 +827,13 @@
           }
 
           const pile = state.piles[pending.pileIndex];
-          if (pile && legalPickups(pile).length > 0) {
-            state.notice = { text: "Illegal play.", tone: "illegal" };
-            state.lastAction = { type: "illegal", pileId: pending.pileId, cardIds: [] };
-            return;
-          }
+          const missedPickup = pile && legalPickups(pile).length > 0;
 
           state.pendingChoice = null;
-          state.notice = null;
+          state.missCount += missedPickup ? 1 : 0;
+          state.notice = missedPickup
+            ? { text: `Missed pickup on pile ${pending.pileId}.`, tone: "neutral" }
+            : null;
           state.lastAction = { type: "pass", pileId: pending.pileId, cardIds: [] };
           finishTurn(pending.pileIndex);
 
@@ -1158,6 +1158,7 @@
                 ${statHTML("Status", status, state.result !== "playing")}
                 ${statHTML("Stock", String(state.deck.length))}
                 ${statHTML("Dealt", String(state.dealCount))}
+                ${statHTML("Misses", String(state.missCount))}
                 ${statHTML("Pile", String(activePileId))}
               </section>
             </header>
