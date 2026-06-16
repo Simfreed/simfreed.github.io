@@ -316,18 +316,6 @@
         line-height: 0.76;
       }
 
-      .value {
-        margin-top: 8px;
-        color: #665b4e;
-        font-size: 0.72rem;
-        font-weight: 950;
-        text-transform: uppercase;
-      }
-
-      .card.red .value {
-        color: #8a3440;
-      }
-
       .empty {
         display: grid;
         min-height: 270px;
@@ -537,29 +525,142 @@
 
       @media (max-width: 760px) {
         .app {
-          padding-inline: 12px;
+          padding: 10px 8px 96px;
         }
 
         header {
           align-items: stretch;
           flex-direction: column;
+          gap: 10px;
+          padding-bottom: 10px;
+        }
+
+        h1 {
+          font-size: 1.72rem;
+          line-height: 1;
         }
 
         .stats {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 5px;
           width: 100%;
         }
 
+        .stat {
+          padding: 5px 4px;
+        }
+
+        .stat span {
+          font-size: 0.56rem;
+        }
+
+        .stat strong {
+          font-size: 0.82rem;
+        }
+
         .strip {
-          grid-template-columns: 64px minmax(0, 1fr);
+          grid-template-columns: 46px minmax(0, 1fr);
+          gap: 8px;
+          margin-top: 8px;
         }
 
         .stock {
-          width: 64px;
-          height: 88px;
+          width: 46px;
+          height: 60px;
+        }
+
+        .stock-card {
+          inset: 0 6px 6px 0;
+          border-radius: 7px;
+          background-size: 14px 14px;
+          font-size: 0.96rem;
+        }
+
+        .stock::before,
+        .stock::after {
+          border-radius: 7px;
+        }
+
+        .notice {
+          min-height: 52px;
+          padding: 8px 10px;
+          font-size: 0.94rem;
+        }
+
+        .speed-control {
+          margin-top: 8px;
+        }
+
+        .speed-control > span {
+          font-size: 0.64rem;
+        }
+
+        .speed-options {
+          gap: 4px;
+          width: 100%;
+        }
+
+        .speed-button {
+          min-height: 36px;
+          font-size: 0.78rem;
+        }
+
+        .board-scroll {
+          overflow-x: visible;
+          margin-top: 10px;
+          padding-bottom: 8px;
         }
 
         .piles {
-          grid-template-columns: repeat(var(--pile-count), minmax(118px, 1fr));
+          grid-template-columns: repeat(var(--pile-count), minmax(0, 1fr));
+          gap: 4px;
+          min-width: 0;
+        }
+
+        .pile {
+          min-height: 170px;
+          padding: 4px;
+          border-radius: 6px;
+        }
+
+        .pile-head {
+          gap: 2px;
+          font-size: 0.64rem;
+        }
+
+        .pile-word {
+          display: none;
+        }
+
+        .cards {
+          gap: 3px;
+          margin-top: 5px;
+        }
+
+        .card {
+          min-height: 46px;
+          padding: 4px;
+          border-radius: 6px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.18);
+        }
+
+        .card-top {
+          gap: 2px;
+          font-size: 0.74rem;
+        }
+
+        .suit {
+          font-size: 1.34rem;
+        }
+
+        .decision {
+          gap: 8px;
+          margin-top: 10px;
+          padding: 10px;
+        }
+
+        .decision h2 {
+          font-size: 1.35rem;
         }
 
         .decision {
@@ -1151,7 +1252,7 @@
           return `
             <article class="pile ${active ? "active" : ""} ${recentPile ? "recent" : ""}">
               <div class="pile-head">
-                <span>Pile ${pile.id}</span>
+                <span><span class="pile-word">Pile </span>${pile.id}</span>
                 <span>${pile.cards.length}</span>
               </div>
               <div class="cards">
@@ -1168,7 +1269,6 @@
                 <span>${card.rank}</span>
                 <span class="suit">${card.symbol}</span>
               </div>
-              <div class="value">value ${card.value}</div>
             </div>
           `;
         }
