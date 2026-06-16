@@ -225,9 +225,11 @@
       }
 
       .piles {
+        --pile-width: 136px;
         display: grid;
-        grid-template-columns: repeat(var(--pile-count), minmax(136px, 1fr));
+        grid-template-columns: repeat(var(--pile-count), var(--pile-width));
         gap: 10px;
+        justify-content: center;
         min-width: max-content;
       }
 
@@ -263,9 +265,29 @@
       }
 
       .cards {
-        display: grid;
+        display: flex;
+        flex-direction: column;
         gap: var(--card-gap, 7px);
         margin-top: 10px;
+      }
+
+      .cards > .card + .card {
+        margin-top: var(--card-overlap, 0px);
+      }
+
+      .pile.stacked .cards {
+        display: block;
+        position: relative;
+        height: var(--cards-height);
+        gap: 0;
+      }
+
+      .pile.stacked .card-slot {
+        position: absolute;
+        top: var(--slot-top);
+        right: 0;
+        left: 0;
+        z-index: var(--slot-z);
       }
 
       .card {
@@ -275,6 +297,7 @@
         border-radius: 8px;
         background: var(--paper);
         color: var(--paper-ink);
+        overflow: hidden;
         padding: var(--card-pad-y, 8px) var(--card-pad-x, 9px);
         box-shadow: 0 7px 14px rgba(0, 0, 0, 0.19);
       }
@@ -294,11 +317,46 @@
         gap: 8px;
         font-size: var(--rank-size, 1.2rem);
         font-weight: 950;
+        line-height: 1;
       }
 
       .suit {
         font-size: var(--suit-size, 2.3rem);
         line-height: 0.76;
+      }
+
+      .card-stack {
+        position: relative;
+        display: grid;
+        min-height: var(--card-height, 76px);
+        height: var(--card-height, 76px);
+        place-items: center;
+        border: 2px solid rgba(255, 250, 240, 0.7);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(255, 255, 255, 0.12) 25%, transparent 25% 50%, rgba(255, 255, 255, 0.12) 50% 75%, transparent 75%),
+          #163f62;
+        background-size: 18px 18px;
+        color: var(--ink);
+        font-size: 0.86rem;
+        font-weight: 950;
+        box-shadow: 0 7px 14px rgba(0, 0, 0, 0.19);
+      }
+
+      .card-stack::before,
+      .card-stack::after {
+        position: absolute;
+        inset: 4px -3px -4px 3px;
+        z-index: -1;
+        border: 2px solid rgba(255, 250, 240, 0.35);
+        border-radius: inherit;
+        background: #123953;
+        content: "";
+      }
+
+      .card-stack::after {
+        inset: 8px -6px -8px 6px;
+        opacity: 0.72;
       }
 
       .empty {
@@ -659,8 +717,10 @@
         }
 
         .piles {
-          grid-template-columns: repeat(var(--pile-count), minmax(0, 1fr));
+          --pile-width: max(34px, calc((100vw - 40px) / 7));
+          grid-template-columns: repeat(var(--pile-count), var(--pile-width));
           gap: 4px;
+          justify-content: center;
           min-width: 0;
         }
 
@@ -701,6 +761,22 @@
 
         .suit {
           font-size: var(--suit-size, 1.34rem);
+        }
+
+        .card-stack {
+          min-height: var(--card-height, 46px);
+          height: var(--card-height, 46px);
+          border-radius: 6px;
+          background-size: 12px 12px;
+          font-size: 0.68rem;
+        }
+
+        .card-stack::before {
+          inset: 3px -2px -3px 2px;
+        }
+
+        .card-stack::after {
+          inset: 6px -4px -6px 4px;
         }
 
         .choice,
@@ -1343,7 +1419,7 @@
           `;
         }
 
-        function pileStyle(cardCount) {
+        function pileLayout(cardCount) {
           const isMobile = window.matchMedia("(max-width: 760px)").matches;
           const count = Math.max(cardCount, 1);
           const viewportHeight = window.innerHeight || 760;
@@ -1358,59 +1434,140 @@
             minPileHeight,
             Math.min(isMobile ? 520 : 560, viewportHeight - reservedHeight),
           );
-          const defaultCardHeight = isMobile ? 46 : 76;
-          const minCardHeight = isMobile ? 4 : 6;
-          const defaultGap = isMobile ? 3 : 7;
-          const gap = count > 18 ? 1 : count > 10 ? 2 : defaultGap;
+          const cardHeight = isMobile ? 46 : 76;
+          const gap = 0;
+          const overlap = isMobile ? -12 : -18;
           const chromeHeight = isMobile ? 24 : 48;
-          const availableCardHeight =
-            maxPileHeight - chromeHeight - gap * Math.max(count - 1, 0);
-          const cardHeight = Math.max(
-            minCardHeight,
-            Math.min(defaultCardHeight, Math.floor(availableCardHeight / count)),
-          );
-          const cardPadY = cardHeight < 16 ? 1 : cardHeight < 28 ? 2 : isMobile ? 4 : 8;
-          const cardPadX = cardHeight < 16 ? 1 : cardHeight < 28 ? 2 : isMobile ? 4 : 9;
-          const rankSize = Math.max(
-            isMobile ? 0.36 : 0.46,
-            Math.min(isMobile ? 0.74 : 1.2, cardHeight / (isMobile ? 62 : 64)),
-          );
-          const suitSize = Math.max(
-            isMobile ? 0.42 : 0.52,
-            Math.min(isMobile ? 1.34 : 2.3, cardHeight / (isMobile ? 34 : 32)),
-          );
+          const defaultPadY = isMobile ? 4 : 8;
+          const defaultPadX = isMobile ? 4 : 9;
+          const defaultRankSize = isMobile ? 0.74 : 1.2;
+          const defaultSuitSize = isMobile ? 1.34 : 2.3;
           const naturalPileHeight =
-            chromeHeight + cardHeight * count + gap * Math.max(count - 1, 0);
-          const pileHeight = Math.min(
-            maxPileHeight,
-            Math.max(Math.min(comfortablePileHeight, maxPileHeight), naturalPileHeight),
-          );
-
-          return [
-            `--pile-height:${Math.ceil(pileHeight)}px`,
+            chromeHeight + cardHeight * count + (gap + overlap) * Math.max(count - 1, 0);
+          const defaultStyle = [
+            `--pile-height:${Math.ceil(Math.max(Math.min(comfortablePileHeight, maxPileHeight), Math.min(naturalPileHeight, maxPileHeight)))}px`,
             `--card-height:${cardHeight}px`,
             `--card-gap:${gap}px`,
-            `--card-pad-y:${cardPadY}px`,
-            `--card-pad-x:${cardPadX}px`,
-            `--rank-size:${rankSize.toFixed(2)}rem`,
-            `--suit-size:${suitSize.toFixed(2)}rem`,
+            `--card-overlap:${overlap}px`,
+            `--card-pad-y:${defaultPadY}px`,
+            `--card-pad-x:${defaultPadX}px`,
+            `--rank-size:${defaultRankSize.toFixed(2)}rem`,
+            `--suit-size:${defaultSuitSize.toFixed(2)}rem`,
           ].join(";");
+
+          if (naturalPileHeight <= maxPileHeight || cardCount <= 1) {
+            return {
+              stacked: false,
+              style: defaultStyle,
+            };
+          }
+
+          const cardsHeight = Math.max(cardHeight, maxPileHeight - chromeHeight);
+          const minReadableStep = isMobile ? 26 : 34;
+          const maxSlots = Math.max(
+            1,
+            Math.floor((cardsHeight - cardHeight) / minReadableStep) + 1,
+          );
+          const needsMiddleStack = cardCount > maxSlots;
+          let topCount = cardCount;
+          let bottomCount = 0;
+          let hiddenCount = 0;
+
+          if (needsMiddleStack) {
+            const visibleFaceSlots = Math.max(5, Math.min(10, maxSlots - 1, cardCount - 1));
+            bottomCount = Math.min(5, Math.max(3, Math.ceil(visibleFaceSlots / 2)));
+            topCount = visibleFaceSlots - bottomCount;
+
+            if (topCount < 2 && cardCount - bottomCount > 2) {
+              topCount = 2;
+              bottomCount = visibleFaceSlots - topCount;
+            }
+
+            hiddenCount = cardCount - topCount - bottomCount;
+
+            if (hiddenCount <= 0) {
+              topCount = cardCount;
+              bottomCount = 0;
+              hiddenCount = 0;
+            }
+          }
+
+          const slotCount = hiddenCount > 0 ? topCount + bottomCount + 1 : cardCount;
+          const slotStep = slotCount > 1
+            ? Math.max(0, Math.floor((cardsHeight - cardHeight) / (slotCount - 1)))
+            : 0;
+          const stackedStyle = [
+            `--pile-height:${Math.ceil(maxPileHeight)}px`,
+            `--cards-height:${Math.ceil(cardsHeight)}px`,
+            `--card-height:${cardHeight}px`,
+            `--card-gap:0px`,
+            `--card-overlap:0px`,
+            `--card-pad-y:${defaultPadY}px`,
+            `--card-pad-x:${defaultPadX}px`,
+            `--rank-size:${defaultRankSize.toFixed(2)}rem`,
+            `--suit-size:${defaultSuitSize.toFixed(2)}rem`,
+          ].join(";");
+
+          return {
+            stacked: true,
+            style: stackedStyle,
+            topCount,
+            bottomCount,
+            hiddenCount,
+            slotStep,
+          };
         }
 
         function pileHTML(pile, active, recentCards) {
           const recentPile = state.lastAction?.pileId === pile.id;
-          const style = pileStyle(pile.cards.length);
+          const layout = pileLayout(pile.cards.length);
           return `
-            <article class="pile ${active ? "active" : ""} ${recentPile ? "recent" : ""}" ${style ? `style="${style}"` : ""}>
+            <article class="pile ${active ? "active" : ""} ${recentPile ? "recent" : ""} ${layout.stacked ? "stacked" : ""}" ${layout.style ? `style="${layout.style}"` : ""}>
               <div class="pile-head">
                 <span><span class="pile-word">Pile </span>${pile.id}</span>
                 <span>${pile.cards.length}</span>
               </div>
               <div class="cards">
-                ${pile.cards.map((card) => cardHTML(card, recentCards.has(card.id))).join("")}
+                ${pileCardsHTML(pile.cards, recentCards, layout)}
               </div>
             </article>
           `;
+        }
+
+        function pileCardsHTML(cards, recentCards, layout) {
+          if (!layout.stacked) {
+            return cards.map((card) => cardHTML(card, recentCards.has(card.id))).join("");
+          }
+
+          const items = [];
+          if (layout.hiddenCount > 0) {
+            items.push(...cards.slice(0, layout.topCount).map((card) => ({ type: "card", card })));
+            items.push({ type: "stack", count: layout.hiddenCount });
+            items.push(...cards.slice(cards.length - layout.bottomCount).map((card) => ({ type: "card", card })));
+          } else {
+            items.push(...cards.map((card) => ({ type: "card", card })));
+          }
+
+          return items
+            .map((item, index) => {
+              const slotStyle = `--slot-top:${index * layout.slotStep}px;--slot-z:${index + 1}`;
+              if (item.type === "stack") {
+                return `
+                  <div class="card-slot stack-slot" style="${slotStyle}">
+                    <div class="card-stack" aria-label="${item.count} middle cards stacked">
+                      <span>+${item.count}</span>
+                    </div>
+                  </div>
+                `;
+              }
+
+              return `
+                <div class="card-slot" style="${slotStyle}">
+                  ${cardHTML(item.card, recentCards.has(item.card.id))}
+                </div>
+              `;
+            })
+            .join("");
         }
 
         function cardHTML(card, recent) {
