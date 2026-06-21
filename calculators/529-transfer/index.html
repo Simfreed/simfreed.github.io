@@ -1,0 +1,2132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Brokerage to 529 Transfer Calculator</title>
+    <style>
+      :root {
+        --background: #f6f7f3;
+        --foreground: #1c1f1d;
+        --muted: #66706a;
+        --panel: #ffffff;
+        --line: #d9ded7;
+        --line-strong: #b7c0ba;
+        --green: #157f62;
+        --green-soft: #dff4ea;
+        --blue: #2267a5;
+        --blue-soft: #dcecfb;
+        --chart-blue: #2563eb;
+        --chart-red: #c2410c;
+        --red: #b2413b;
+        --red-soft: #f7dfdc;
+        --amber: #a66c16;
+        --ink: #111513;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--background);
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          linear-gradient(135deg, rgba(34, 103, 165, 0.08), transparent 30rem),
+          linear-gradient(315deg, rgba(21, 127, 98, 0.08), transparent 28rem),
+          var(--background);
+        color: var(--foreground);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .site-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 24px 0;
+      }
+
+      .site-strip a {
+        color: var(--blue);
+        font-size: 0.86rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .site-strip a:hover {
+        text-decoration: underline;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+        gap: 24px;
+        min-height: calc(100vh - 42px);
+        padding: 24px;
+      }
+
+      .result-panel,
+      .control-panel,
+      .detail-band {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 22px 60px rgba(31, 41, 35, 0.08);
+      }
+
+      .result-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        min-width: 0;
+        padding: 28px;
+      }
+
+      .result-copy {
+        max-width: 760px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--blue);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 12px;
+        color: var(--ink);
+        font-size: clamp(2.2rem, 5vw, 4.8rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-bottom: 12px;
+        color: var(--ink);
+        font-size: 1rem;
+        font-weight: 750;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        color: var(--ink);
+        font-size: 0.96rem;
+        font-weight: 750;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .metric {
+        min-width: 0;
+        padding: 16px;
+        border-right: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .metric:last-child {
+        border-right: 0;
+      }
+
+      .metric span,
+      .bars span,
+      .insight-strip span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 650;
+      }
+
+      .metric strong {
+        display: block;
+        margin-top: 8px;
+        color: var(--ink);
+        font-size: clamp(1rem, 1.8vw, 1.35rem);
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+      }
+
+      .metric.good strong {
+        color: var(--green);
+      }
+
+      .metric.bad strong {
+        color: var(--red);
+      }
+
+      .bars {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfa;
+      }
+
+      .bars div {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .bars strong {
+        color: var(--ink);
+        font-size: 0.95rem;
+      }
+
+      .bars i {
+        grid-column: 1 / -1;
+        display: block;
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--green), var(--blue));
+      }
+
+      .bars div:nth-child(2) i {
+        background: linear-gradient(90deg, #79847d, #38423c);
+      }
+
+      .chart-panel {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfa;
+      }
+
+      .chart-heading {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .chart-heading h2 {
+        margin-bottom: 4px;
+      }
+
+      .chart-heading p {
+        margin-bottom: 0;
+        font-size: 0.86rem;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        min-width: 150px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--ink);
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .legend span::before {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--chart-blue);
+        content: "";
+      }
+
+      .legend .brokerage-dot::before {
+        background: var(--chart-red);
+      }
+
+      .chart-wrap {
+        width: 100%;
+        min-width: 0;
+        aspect-ratio: 19 / 7;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      .line-chart {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .chart-grid {
+        stroke: #dfe5de;
+        stroke-width: 1;
+      }
+
+      .chart-label,
+      .chart-x-label {
+        fill: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .chart-label {
+        text-anchor: end;
+      }
+
+      .chart-x-label {
+        text-anchor: middle;
+      }
+
+      .plan-line,
+      .brokerage-line {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 4;
+      }
+
+      .plan-line {
+        stroke: var(--chart-blue);
+      }
+
+      .brokerage-line {
+        stroke: var(--chart-red);
+      }
+
+      .plan-point,
+      .brokerage-point {
+        stroke: #ffffff;
+        stroke-width: 2;
+      }
+
+      .plan-point {
+        fill: var(--chart-blue);
+      }
+
+      .brokerage-point {
+        fill: var(--chart-red);
+      }
+
+      .chart-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--line);
+      }
+
+      .chart-stats div {
+        min-width: 0;
+        padding: 12px;
+        background: #ffffff;
+      }
+
+      .chart-stats span,
+      .chart-stats small {
+        display: block;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 650;
+      }
+
+      .chart-stats strong {
+        display: block;
+        margin: 6px 0;
+        color: var(--ink);
+        overflow-wrap: anywhere;
+      }
+
+      .insight-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--line);
+      }
+
+      .insight-strip div {
+        min-width: 0;
+        padding: 16px;
+        background: #ffffff;
+      }
+
+      .insight-strip strong {
+        display: block;
+        margin-top: 8px;
+        color: var(--ink);
+        font-size: 1.1rem;
+        overflow-wrap: anywhere;
+      }
+
+      .notes {
+        padding-top: 4px;
+      }
+
+      .notes ul {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding-left: 1.15rem;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .control-panel {
+        align-self: start;
+        max-height: calc(100vh - 72px);
+        overflow: auto;
+        padding: 18px;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin: -18px -18px 12px;
+        padding: 18px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+      }
+
+      .toolbar h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .toolbar button {
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        padding: 8px 12px;
+        font-weight: 700;
+      }
+
+      details {
+        border-top: 1px solid var(--line);
+      }
+
+      details:first-of-type {
+        border-top: 0;
+      }
+
+      summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 16px 0;
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        float: right;
+        color: var(--blue);
+        font-weight: 900;
+        content: "+";
+      }
+
+      details[open] summary::after {
+        content: "-";
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        padding-bottom: 18px;
+      }
+
+      .toggle-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding-bottom: 18px;
+      }
+
+      .field,
+      .toggle {
+        min-width: 0;
+      }
+
+      .field-label,
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 6px;
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 740;
+      }
+
+      .input-shell {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .input-shell:focus-within,
+      select:focus {
+        border-color: var(--blue);
+        outline: 3px solid rgba(34, 103, 165, 0.18);
+      }
+
+      .input-shell b {
+        flex: 0 0 auto;
+        padding: 0 10px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      input,
+      select {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        padding: 10px;
+        outline: 0;
+      }
+
+      input:disabled,
+      select:disabled {
+        cursor: not-allowed;
+      }
+
+      select {
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .field.is-disabled {
+        opacity: 0.55;
+      }
+
+      .range {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        padding: 0;
+        accent-color: var(--blue);
+      }
+
+      .range::-webkit-slider-thumb {
+        cursor: pointer;
+      }
+
+      .range:disabled::-webkit-slider-thumb {
+        cursor: not-allowed;
+      }
+
+      small,
+      .tiny {
+        display: block;
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        line-height: 1.4;
+      }
+
+      .toggle {
+        display: grid;
+        position: relative;
+        grid-template-columns: 42px 1fr;
+        align-items: start;
+        column-gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfa;
+      }
+
+      .toggle input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .toggle i {
+        position: relative;
+        grid-row: 1 / span 2;
+        width: 38px;
+        height: 22px;
+        margin-top: 1px;
+        border-radius: 999px;
+        background: #c9d1cc;
+        box-shadow: inset 0 0 0 1px rgba(17, 21, 19, 0.08);
+      }
+
+      .toggle i::after {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #ffffff;
+        box-shadow: 0 1px 4px rgba(17, 21, 19, 0.2);
+        content: "";
+        transition:
+          left 140ms ease,
+          background 140ms ease;
+      }
+
+      .toggle input:checked + i {
+        background: var(--green);
+      }
+
+      .toggle input:checked + i::after {
+        left: 19px;
+      }
+
+      .toggle input:focus-visible + i {
+        outline: 3px solid rgba(34, 103, 165, 0.18);
+        outline-offset: 2px;
+      }
+
+      .toggle-label {
+        position: relative;
+        margin-bottom: 0;
+      }
+
+      .tooltip {
+        position: relative;
+        display: inline-grid;
+        place-items: center;
+        flex: 0 0 auto;
+        width: 17px;
+        height: 17px;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--blue);
+        font-size: 0.68rem;
+        font-style: normal;
+        font-weight: 900;
+        line-height: 1;
+        cursor: help;
+      }
+
+      .tooltip::after {
+        position: absolute;
+        z-index: 10;
+        right: 0;
+        top: calc(100% + 8px);
+        width: min(310px, calc(100vw - 48px));
+        max-width: 310px;
+        padding: 10px 11px;
+        border: 1px solid #bed0c5;
+        border-radius: 8px;
+        background: #11201a;
+        color: #f6faf7;
+        box-shadow: 0 16px 38px rgba(17, 21, 19, 0.22);
+        content: attr(aria-label);
+        font-size: 0.76rem;
+        font-weight: 600;
+        line-height: 1.45;
+        opacity: 0;
+        pointer-events: none;
+        text-align: left;
+        transform: translateY(-2px);
+        transition:
+          opacity 120ms ease,
+          transform 120ms ease;
+      }
+
+      .tooltip::before {
+        position: absolute;
+        z-index: 11;
+        right: 5px;
+        top: calc(100% + 3px);
+        width: 10px;
+        height: 10px;
+        border-top: 1px solid #bed0c5;
+        border-left: 1px solid #bed0c5;
+        background: #11201a;
+        content: "";
+        opacity: 0;
+        pointer-events: none;
+        transform: rotate(45deg);
+        transition: opacity 120ms ease;
+      }
+
+      .field-grid > :nth-child(odd) .tooltip::after,
+      .toggle-grid > :nth-child(odd) .tooltip::after {
+        right: auto;
+        left: 0;
+      }
+
+      .field-grid > :nth-child(odd) .tooltip::before,
+      .toggle-grid > :nth-child(odd) .tooltip::before {
+        right: auto;
+        left: 5px;
+      }
+
+      .tooltip:hover::after,
+      .tooltip:hover::before,
+      .tooltip:focus-visible::after,
+      .tooltip:focus-visible::before {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .tooltip:hover::before,
+      .tooltip:focus-visible::before {
+        transform: rotate(45deg);
+      }
+
+      .tooltip:focus-visible {
+        outline: 3px solid rgba(34, 103, 165, 0.24);
+        outline-offset: 2px;
+      }
+
+      .toggle small {
+        grid-column: 2;
+      }
+
+      .assumptions {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .spark {
+        display: flex;
+        align-items: end;
+        gap: 4px;
+        height: 74px;
+        margin-bottom: 14px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfa;
+      }
+
+      .spark span {
+        flex: 1;
+        border-radius: 999px 999px 0 0;
+        background: linear-gradient(180deg, var(--blue), var(--green));
+      }
+
+      .source-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 14px 0 8px;
+      }
+
+      .source-list a {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--blue);
+        padding: 6px 10px;
+        font-size: 0.78rem;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .source-list a:hover {
+        text-decoration: underline;
+      }
+
+      .detail-band {
+        grid-column: 1 / -1;
+        padding: 24px;
+      }
+
+      .check-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .check-grid article {
+        min-width: 0;
+        border-top: 3px solid var(--blue);
+        padding-top: 12px;
+      }
+
+      .check-grid article:nth-child(2) {
+        border-color: var(--green);
+      }
+
+      .check-grid article:nth-child(3) {
+        border-color: var(--amber);
+      }
+
+      .check-grid article:nth-child(4) {
+        border-color: var(--red);
+      }
+
+      .check-grid p {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 1100px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .control-panel {
+          max-height: none;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .site-strip {
+          padding: 10px 12px 0;
+        }
+
+        .app-shell {
+          gap: 14px;
+          padding: 12px;
+        }
+
+        .result-panel,
+        .control-panel,
+        .detail-band {
+          padding: 16px;
+        }
+
+        .toolbar {
+          margin: -16px -16px 10px;
+          padding: 14px 16px;
+        }
+
+        h1 {
+          font-size: 2.4rem;
+        }
+
+        .summary-grid,
+        .insight-strip,
+        .chart-stats,
+        .field-grid,
+        .toggle-grid,
+        .check-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metric {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .metric:last-child {
+          border-bottom: 0;
+        }
+
+        .bars div {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+
+        .chart-heading {
+          display: grid;
+        }
+
+        .legend {
+          justify-content: flex-start;
+        }
+
+        .chart-wrap {
+          aspect-ratio: 4 / 3;
+        }
+
+        .field-grid .tooltip::after,
+        .toggle-grid .tooltip::after {
+          right: auto;
+          left: 0;
+        }
+
+        .field-grid .tooltip::before,
+        .toggle-grid .tooltip::before {
+          right: auto;
+          left: 5px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="site-strip" aria-label="Site">
+      <a href="/">Simon L. Freedman</a>
+      <a href="/calculators/">Calculators</a>
+    </nav>
+
+    <main class="app-shell">
+      <section class="result-panel">
+        <div class="result-copy">
+          <p class="eyebrow">Brokerage to 529 decision model</p>
+          <h1 id="recommendation">Close call</h1>
+          <p>
+            This compares selling taxable funds now and investing the net amount
+            in a 529 against leaving the same dollars in a brokerage account
+            until the first education bill.
+          </p>
+        </div>
+
+        <div class="summary-grid">
+          <div class="metric" id="expected-advantage-metric">
+            <span>Expected advantage</span>
+            <strong id="expected-advantage">$0</strong>
+          </div>
+          <div class="metric" id="sale-tax-metric">
+            <span>Immediate sale tax</span>
+            <strong id="sale-tax">$0</strong>
+          </div>
+          <div class="metric" id="state-benefit-metric">
+            <span>State contribution benefit</span>
+            <strong id="state-benefit">$0</strong>
+          </div>
+          <div class="metric">
+            <span>Projected education need</span>
+            <strong id="education-need">$0</strong>
+          </div>
+        </div>
+
+        <div class="bars" aria-label="Strategy value comparison">
+          <div>
+            <span>529 expected</span>
+            <strong id="bar-plan-value">$0</strong>
+            <i id="bar-plan"></i>
+          </div>
+          <div>
+            <span>Keep brokerage</span>
+            <strong id="bar-brokerage-value">$0</strong>
+            <i id="bar-brokerage"></i>
+          </div>
+        </div>
+
+        <section class="chart-panel" aria-labelledby="account-chart-title">
+          <div class="chart-heading">
+            <div>
+              <h2 id="account-chart-title">Account value over time</h2>
+              <p>
+                529 account value compared with taxable brokerage value after
+                estimated liquidation tax.
+              </p>
+            </div>
+            <div class="legend" aria-label="Chart legend">
+              <span class="plan-dot">529</span>
+              <span class="brokerage-dot">Brokerage</span>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <svg
+              id="line-chart"
+              class="line-chart"
+              role="img"
+              viewBox="0 0 760 280"
+              preserveAspectRatio="xMidYMid meet"
+            ></svg>
+          </div>
+
+          <div class="chart-stats">
+            <div>
+              <span>At school start</span>
+              <strong id="chart-plan">$0</strong>
+              <small>529 account value</small>
+            </div>
+            <div>
+              <span>At school start</span>
+              <strong id="chart-brokerage">$0</strong>
+              <small>Brokerage after estimated tax</small>
+            </div>
+            <div>
+              <span>Gap</span>
+              <strong id="chart-gap">$0</strong>
+              <small id="chart-gap-label">Close</small>
+            </div>
+          </div>
+        </section>
+
+        <div class="insight-strip">
+          <div>
+            <span>529 qualified-use case</span>
+            <strong id="qualified-case">$0</strong>
+          </div>
+          <div>
+            <span>529 no-school case</span>
+            <strong id="no-school-case">$0</strong>
+          </div>
+          <div>
+            <span>Taxable account before final sale</span>
+            <strong id="brokerage-before-sale">$0</strong>
+          </div>
+        </div>
+
+        <div class="notes">
+          <h2>What is moving the result</h2>
+          <ul id="drivers"></ul>
+        </div>
+      </section>
+
+      <section class="control-panel" aria-label="Calculator inputs">
+        <div class="toolbar">
+          <h2>Inputs</h2>
+          <button type="button" id="reset-button">Reset</button>
+        </div>
+
+        <div id="controls"></div>
+
+        <section class="assumptions">
+          <h2>Model details</h2>
+          <div class="spark" id="spark" aria-hidden="true"></div>
+          <p>
+            Taxes and laws change; the defaults are editable placeholders. The
+            model does not optimize lots, apply the full capital gains worksheet,
+            or replace tax advice. It is meant to expose the swing factors.
+          </p>
+          <div class="source-list">
+            <a href="https://www.irs.gov/publications/p970">IRS Pub. 970</a>
+            <a href="https://www.irs.gov/newsroom/529-plans-questions-and-answers">IRS 529 Q&amp;A</a>
+            <a href="https://www.irs.gov/taxtopics/tc409">IRS capital gains</a>
+            <a href="https://www.irs.gov/taxtopics/tc559">IRS NIIT</a>
+            <a href="https://www.irs.gov/businesses/small-businesses-self-employed/frequently-asked-questions-on-gift-taxes">IRS gift tax FAQ</a>
+          </div>
+          <p class="tiny" id="current-law-notes"></p>
+        </section>
+      </section>
+
+      <section class="detail-band">
+        <h2>Variables worth checking before acting</h2>
+        <div class="check-grid">
+          <article>
+            <h3>Tax lots</h3>
+            <p>
+              Use specific lots if possible. A low-basis sale can erase years of
+              529 tax advantage, while harvested losses can make a transfer much
+              cleaner.
+            </p>
+          </article>
+          <article>
+            <h3>State plan rules</h3>
+            <p>
+              Some states offer deductions or credits, some require in-state
+              plans, and some recapture benefits after nonqualified withdrawals.
+            </p>
+          </article>
+          <article>
+            <h3>Aid ownership</h3>
+            <p>
+              A parent-owned taxable account and parent-owned 529 may be treated
+              similarly for FAFSA assets. Student-owned or grandparent-owned
+              money can change the aid math.
+            </p>
+          </article>
+          <article>
+            <h3>Education-tax credits</h3>
+            <p>
+              You generally cannot double count the same expenses for a tax-free
+              529 distribution and education credits. Reserve cash for credits
+              if those credits are available.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const defaultInputs = {
+        brokerageValue: 50000,
+        costBasis: 32000,
+        movePercent: 100,
+        existingLosses: 0,
+        includeSaleTax: true,
+        saleTaxMode: "long",
+        longTermRate: 15,
+        ordinaryRate: 24,
+        stateGainRate: 4.95,
+        magiBeforeSale: 180000,
+        otherInvestmentIncome: 4000,
+        filingStatus: "joint",
+        includeNiit: true,
+        yearsUntilSchool: 8,
+        schoolYears: 4,
+        annualEducationCost: 32000,
+        educationInflation: 5,
+        grossReturn: 6,
+        includeTaxableDrag: true,
+        taxableDistributionYield: 1.8,
+        dividendTaxRate: 19.95,
+        brokerageExpense: 0.06,
+        includeFutureLiquidationTax: true,
+        planExpense: 0.12,
+        includePlanExpense: true,
+        futureGainRate: 19.95,
+        includeStateBenefit: true,
+        stateContributionCap: 10000,
+        stateBenefitRate: 4.95,
+        reinvestStateBenefit: true,
+        payTaxFromSale: true,
+        includeEducationInflation: true,
+        includeOverfundingRisk: true,
+        qualifiedUseProbability: 85,
+        nonQualifiedPenalty: 10,
+        stateNonQualifiedRate: 4.95,
+        rothRolloverAllowed: true,
+        rothRolloverCap: 35000,
+        aidEligible: false,
+        brokerageAidRate: 5.64,
+        planAidRate: 5.64,
+        aidYears: 4,
+        includeGiftCheck: true,
+        giftDonors: 2,
+        giftAnnualExclusion: 19000
+      };
+
+      const fieldExplanations = {
+        "Brokerage value": "The current market value of the taxable brokerage money you are considering moving into a 529.",
+        "Cost basis": "What you originally paid for the shares you would sell. Lower basis means more taxable gain when you sell.",
+        "Percent to move": "The share of the brokerage position to sell and contribute to the 529. Use this to test partial moves instead of all-or-nothing.",
+        "Loss offsets available": "Capital losses you can use against this sale. These reduce the taxable gain created by selling brokerage assets.",
+        "Federal LTCG rate": "Your federal long-term capital gains rate for taxable gains if the sold shares are held long term.",
+        "Ordinary rate": "Your ordinary federal income tax rate. This is used for short-term gains and for nonqualified 529 earnings.",
+        "State income tax rate": "Your state income tax rate applied to the taxable brokerage gain when you sell. This is the state income variable.",
+        "MAGI before sale": "Modified adjusted gross income before this sale. It matters because NIIT can turn on when income crosses federal thresholds.",
+        "Other investment income": "Investment income outside this sale, such as dividends, interest, rent, or other capital gains. It affects the NIIT estimate.",
+        "State benefit cap": "The maximum 529 contribution amount your state rewards with a deduction or credit. Enter zero if your state has no benefit.",
+        "State 529 benefit rate": "The value of your state 529 deduction or credit. For a deduction, use your marginal state tax rate; for a credit, use the credit percentage.",
+        "Years until school": "How many years the money can grow before the first education withdrawal.",
+        "School years": "How many years of qualified education costs you want this money to help cover.",
+        "Annual cost today": "Today's annual education cost before inflation. Include tuition, fees, room, board, books, and other qualified costs you expect.",
+        "Education inflation": "How fast education costs grow each year before and during school.",
+        "Expected annual return": "The assumed annual investment return before taxes and expenses. Both strategies use this same gross return.",
+        "Taxable distribution yield": "The portion of brokerage return paid out each year as taxable dividends, interest, or fund distributions.",
+        "Distribution tax rate": "The tax rate applied each year to taxable brokerage distributions.",
+        "Future liquidation tax": "Estimated tax rate on brokerage gains when you eventually sell later to pay education costs.",
+        "Brokerage expense": "Annual expense ratio or fund cost for the taxable brokerage investment.",
+        "529 plan expense": "Annual expense ratio for the 529 investment option.",
+        "Probability used qualified": "Your estimate that the 529 dollars will be used for qualified education expenses instead of becoming overfunded.",
+        "Nonqualified penalty": "Federal penalty rate applied to earnings when 529 money is withdrawn for nonqualified uses.",
+        "State tax on nonqualified earnings": "State tax rate applied to earnings on nonqualified 529 withdrawals, if your state taxes them.",
+        "Roth rollover cap": "Amount of excess 529 money that can be treated as a Roth IRA rollover fallback before modeling nonqualified withdrawal.",
+        "Gift-tax donors": "Number of contributors whose annual gift-tax exclusions are available, usually one or two parents.",
+        "Annual exclusion per donor": "Annual gift-tax exclusion amount per donor. Contributions above this may require gift-tax filing or 529 superfunding planning.",
+        "Brokerage assessment": "Financial-aid asset assessment rate applied to the brokerage account if need-based aid is relevant.",
+        "529 assessment": "Financial-aid asset assessment rate applied to the 529 if need-based aid is relevant.",
+        "Aid years": "Number of school years where the asset assessment could affect need-based financial aid."
+      };
+
+      const controlsConfig = [
+        {
+          title: "Model switches",
+          open: true,
+          grid: "toggle-grid",
+          controls: [
+            {
+              type: "toggle",
+              key: "includeSaleTax",
+              label: "Realize sale tax now",
+              explanation: "When on, the calculator assumes selling brokerage shares today creates taxable capital gains and possibly state tax and NIIT. When off, the transfer is modeled as if no tax is due at sale."
+            },
+            {
+              type: "toggle",
+              key: "includeStateBenefit",
+              label: "Count state 529 benefit",
+              explanation: "When on, the calculator adds the value of any state tax deduction or credit for 529 contributions. This only helps if your state offers a benefit and your contribution qualifies."
+            },
+            {
+              type: "toggle",
+              key: "includeTaxableDrag",
+              label: "Apply taxable account drag",
+              explanation: "When on, the brokerage account loses some return each year to taxes on dividends, interest, or fund distributions. When off, brokerage growth is treated as fully tax-deferred until sale."
+            },
+            {
+              type: "toggle",
+              key: "includeFutureLiquidationTax",
+              label: "Apply final brokerage tax",
+              explanation: "When on, the brokerage comparison subtracts estimated capital-gains tax when you eventually sell to pay education costs. When off, the chart uses the brokerage account's pre-tax value."
+            },
+            {
+              type: "toggle",
+              key: "includePlanExpense",
+              label: "Apply 529 plan expense",
+              explanation: "When on, the 529 return is reduced by the entered plan expense ratio. Use this to compare a low-cost brokerage fund against the specific 529 investment option you would actually use."
+            },
+            {
+              type: "toggle",
+              key: "includeEducationInflation",
+              label: "Inflate education costs",
+              explanation: "When on, future college costs are increased by the education inflation rate before checking whether the 529 is overfunded. When off, today's annual cost is used unchanged."
+            },
+            {
+              type: "toggle",
+              key: "includeOverfundingRisk",
+              label: "Model overfunding downside",
+              explanation: "When on, the 529 result is probability-weighted for qualified education use versus nonqualified withdrawal. Nonqualified withdrawals model ordinary income tax and penalty on earnings."
+            },
+            {
+              type: "toggle",
+              key: "includeGiftCheck",
+              label: "Show gift-tax flag",
+              explanation: "When on, the calculator flags contributions above the entered annual exclusion per donor. That is a planning flag, not an automatic gift-tax bill."
+            }
+          ]
+        },
+        {
+          title: "Brokerage sale",
+          open: true,
+          grid: "field-grid",
+          controls: [
+            numberField("brokerageValue", "Brokerage value", { prefix: "$", slider: { min: 0, max: 500000, step: 5000 } }),
+            numberField("costBasis", "Cost basis", {
+              prefix: "$",
+              slider: (state) => ({ min: 0, max: Math.max(1000, state.brokerageValue), step: 1000 })
+            }),
+            numberField("movePercent", "Percent to move", {
+              suffix: "%",
+              min: 0,
+              max: 100,
+              step: 5,
+              slider: { min: 0, max: 100, step: 5 },
+              clamp: true
+            }),
+            numberField("existingLosses", "Loss offsets available", {
+              prefix: "$",
+              slider: { min: 0, max: 200000, step: 1000 },
+              hint: "Capital losses or harvested losses used against this sale."
+            }),
+            {
+              type: "select",
+              key: "saleTaxMode",
+              label: "Sale tax treatment",
+              options: [
+                { value: "long", label: "Long-term capital gain" },
+                { value: "short", label: "Short-term or ordinary" }
+              ]
+            },
+            numberField("longTermRate", "Federal LTCG rate", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 23.8, step: 0.1 },
+              disabled: (state) => !state.includeSaleTax
+            }),
+            numberField("ordinaryRate", "Ordinary rate", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 40.8, step: 0.1 },
+              disabled: (state) => !state.includeSaleTax
+            }),
+            numberField("stateGainRate", "State income tax rate", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 15, step: 0.1 },
+              disabled: (state) => !state.includeSaleTax
+            })
+          ]
+        },
+        {
+          title: "NIIT and state benefit",
+          open: false,
+          grid: "field-grid",
+          controls: [
+            {
+              type: "toggle",
+              key: "includeNiit",
+              label: "Model 3.8% NIIT",
+              hint: "Uses an incremental approximation based on MAGI and other investment income.",
+              explanation: "NIIT means Net Investment Income Tax. When on, the sale tax estimate adds the federal 3.8% tax when your MAGI and investment income cross the modeled threshold."
+            },
+            {
+              type: "select",
+              key: "filingStatus",
+              label: "Filing status",
+              options: [
+                { value: "joint", label: "Married filing jointly" },
+                { value: "single", label: "Single or head of household" },
+                { value: "mfs", label: "Married filing separately" }
+              ]
+            },
+            numberField("magiBeforeSale", "MAGI before sale", {
+              prefix: "$",
+              slider: { min: 0, max: 800000, step: 5000 },
+              disabled: (state) => !state.includeSaleTax || !state.includeNiit
+            }),
+            numberField("otherInvestmentIncome", "Other investment income", {
+              prefix: "$",
+              slider: { min: 0, max: 100000, step: 1000 },
+              disabled: (state) => !state.includeSaleTax || !state.includeNiit
+            }),
+            numberField("stateContributionCap", "State benefit cap", {
+              prefix: "$",
+              slider: { min: 0, max: 100000, step: 1000 },
+              disabled: (state) => !state.includeStateBenefit,
+              hint: "Use the deductible contribution cap or creditable amount."
+            }),
+            numberField("stateBenefitRate", "State 529 benefit rate", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 20, step: 0.1 },
+              disabled: (state) => !state.includeStateBenefit,
+              hint: "For a deduction, enter your marginal state rate. For a credit, enter the credit percent."
+            }),
+            {
+              type: "toggle",
+              key: "reinvestStateBenefit",
+              label: "Reinvest state benefit",
+              explanation: "When on, the estimated state tax savings from the 529 contribution are added back into the 529 balance. When off, the benefit still appears as savings but is not reinvested."
+            },
+            {
+              type: "toggle",
+              key: "payTaxFromSale",
+              label: "Sale taxes reduce the 529 deposit",
+              explanation: "When on, sale taxes are paid from the brokerage money being moved, so less goes into the 529. When off, taxes are assumed to be paid from other cash."
+            }
+          ]
+        },
+        {
+          title: "Growth and education need",
+          open: true,
+          grid: "field-grid",
+          controls: [
+            numberField("yearsUntilSchool", "Years until school", {
+              suffix: "yrs",
+              min: 0,
+              max: 25,
+              step: 1,
+              slider: { min: 0, max: 25, step: 1 },
+              clamp: true
+            }),
+            numberField("schoolYears", "School years", {
+              suffix: "yrs",
+              min: 1,
+              max: 8,
+              step: 1,
+              slider: { min: 1, max: 8, step: 1 },
+              clamp: true
+            }),
+            numberField("annualEducationCost", "Annual cost today", {
+              prefix: "$",
+              slider: { min: 0, max: 120000, step: 1000 }
+            }),
+            numberField("educationInflation", "Education inflation", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 10, step: 0.1 },
+              disabled: (state) => !state.includeEducationInflation
+            }),
+            numberField("grossReturn", "Expected annual return", {
+              suffix: "%",
+              min: -20,
+              max: 20,
+              step: 0.1,
+              slider: { min: -10, max: 12, step: 0.1 }
+            }),
+            numberField("taxableDistributionYield", "Taxable distribution yield", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 8, step: 0.1 },
+              disabled: (state) => !state.includeTaxableDrag
+            }),
+            numberField("dividendTaxRate", "Distribution tax rate", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 45, step: 0.1 },
+              disabled: (state) => !state.includeTaxableDrag
+            }),
+            numberField("futureGainRate", "Future liquidation tax", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 45, step: 0.1 },
+              disabled: (state) => !state.includeFutureLiquidationTax
+            }),
+            numberField("brokerageExpense", "Brokerage expense", {
+              suffix: "%",
+              step: 0.01,
+              slider: { min: 0, max: 2, step: 0.01 }
+            }),
+            numberField("planExpense", "529 plan expense", {
+              suffix: "%",
+              step: 0.01,
+              slider: { min: 0, max: 2, step: 0.01 },
+              disabled: (state) => !state.includePlanExpense
+            })
+          ]
+        },
+        {
+          title: "Overfunding and fallback uses",
+          open: false,
+          grid: "field-grid",
+          controls: [
+            numberField("qualifiedUseProbability", "Probability used qualified", {
+              suffix: "%",
+              min: 0,
+              max: 100,
+              step: 5,
+              slider: { min: 0, max: 100, step: 5 },
+              disabled: (state) => !state.includeOverfundingRisk,
+              clamp: true
+            }),
+            numberField("nonQualifiedPenalty", "Nonqualified penalty", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 20, step: 0.1 },
+              disabled: (state) => !state.includeOverfundingRisk
+            }),
+            numberField("stateNonQualifiedRate", "State tax on nonqualified earnings", {
+              suffix: "%",
+              step: 0.1,
+              slider: { min: 0, max: 15, step: 0.1 },
+              disabled: (state) => !state.includeOverfundingRisk
+            }),
+            {
+              type: "toggle",
+              key: "rothRolloverAllowed",
+              label: "Allow 529 to Roth IRA fallback",
+              hint: "Requires current-law conditions such as account age and earned income.",
+              explanation: "When on, excess 529 dollars can be sheltered up to the entered Roth rollover cap before nonqualified withdrawal penalties are applied. Real eligibility has account-age, contribution, earned-income, and annual IRA-limit rules."
+            },
+            numberField("rothRolloverCap", "Roth rollover cap", {
+              prefix: "$",
+              slider: { min: 0, max: 100000, step: 1000 },
+              disabled: (state) => !state.includeOverfundingRisk || !state.rothRolloverAllowed
+            }),
+            numberField("giftDonors", "Gift-tax donors", {
+              min: 1,
+              max: 2,
+              step: 1,
+              slider: { min: 1, max: 2, step: 1 },
+              disabled: (state) => !state.includeGiftCheck,
+              clamp: true
+            }),
+            numberField("giftAnnualExclusion", "Annual exclusion per donor", {
+              prefix: "$",
+              slider: { min: 0, max: 25000, step: 500 },
+              disabled: (state) => !state.includeGiftCheck
+            })
+          ]
+        },
+        {
+          title: "Financial aid sensitivity",
+          open: false,
+          grid: "field-grid",
+          controls: [
+            {
+              type: "toggle",
+              key: "aidEligible",
+              label: "Include aid impact",
+              hint: "Use only if need-based aid is plausible.",
+              explanation: "When on, the calculator estimates how asset assessment could change need-based aid. Leave it off if you do not expect need-based aid or if the 529 and brokerage ownership would be treated the same."
+            },
+            numberField("brokerageAidRate", "Brokerage assessment", {
+              suffix: "%",
+              step: 0.01,
+              slider: { min: 0, max: 10, step: 0.01 },
+              disabled: (state) => !state.aidEligible
+            }),
+            numberField("planAidRate", "529 assessment", {
+              suffix: "%",
+              step: 0.01,
+              slider: { min: 0, max: 10, step: 0.01 },
+              disabled: (state) => !state.aidEligible
+            }),
+            numberField("aidYears", "Aid years", {
+              suffix: "yrs",
+              min: 1,
+              max: 8,
+              step: 1,
+              slider: { min: 1, max: 8, step: 1 },
+              disabled: (state) => !state.aidEligible,
+              clamp: true
+            })
+          ]
+        }
+      ];
+
+      const state = { ...defaultInputs };
+      const controlRefs = [];
+      const currency = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      });
+      const compactCurrency = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        notation: "compact",
+        maximumFractionDigits: 1
+      });
+
+      function numberField(key, label, options = {}) {
+        return { type: "number", key, label, ...options };
+      }
+
+      function pct(value) {
+        return `${value.toFixed(value < 10 ? 2 : 1)}%`;
+      }
+
+      function clamp(value, min, max) {
+        const parsed = Number.isFinite(value) ? value : min;
+        return Math.min(max, Math.max(min, parsed));
+      }
+
+      function rate(value) {
+        return value / 100;
+      }
+
+      function niitThreshold(status) {
+        if (status === "joint") return 250000;
+        if (status === "mfs") return 125000;
+        return 200000;
+      }
+
+      function incrementalNiit(inputs, taxableSaleGain) {
+        if (!inputs.includeNiit || taxableSaleGain <= 0) return 0;
+
+        const threshold = niitThreshold(inputs.filingStatus);
+        const beforeExcess = Math.max(0, inputs.magiBeforeSale - threshold);
+        const afterExcess = Math.max(0, inputs.magiBeforeSale + taxableSaleGain - threshold);
+        const beforeTaxBase = Math.min(inputs.otherInvestmentIncome, beforeExcess);
+        const afterTaxBase = Math.min(inputs.otherInvestmentIncome + taxableSaleGain, afterExcess);
+
+        return Math.max(0, afterTaxBase - beforeTaxBase) * 0.038;
+      }
+
+      function afterTaxBrokerageValue(inputs, balance, contributionBasis) {
+        const gain = Math.max(0, balance - contributionBasis);
+        const tax = inputs.includeFutureLiquidationTax ? gain * rate(inputs.futureGainRate) : 0;
+        return Math.max(0, balance - tax);
+      }
+
+      function projectBrokerage(inputs, start, basis) {
+        let balance = Math.max(0, start);
+        let adjustedBasis = Math.max(0, basis);
+        let annualTaxesPaid = 0;
+        const yearlyBalances = [balance];
+        const yearlyNetBalances = [afterTaxBrokerageValue(inputs, balance, adjustedBasis)];
+        const taxableYield = inputs.includeTaxableDrag ? rate(inputs.taxableDistributionYield) : 0;
+        const dividendRate = inputs.includeTaxableDrag ? rate(inputs.dividendTaxRate) : 0;
+        const expense = rate(inputs.brokerageExpense);
+        const grossReturn = rate(inputs.grossReturn);
+        const priceReturn = Math.max(-0.9, grossReturn - taxableYield - expense);
+
+        for (let year = 0; year < Math.max(0, inputs.yearsUntilSchool); year += 1) {
+          const distributions = Math.max(0, balance * taxableYield);
+          const tax = distributions * dividendRate;
+          annualTaxesPaid += tax;
+          const reinvested = distributions - tax;
+          adjustedBasis += reinvested;
+          balance = Math.max(0, balance * (1 + priceReturn) + reinvested);
+          yearlyBalances.push(balance);
+          yearlyNetBalances.push(afterTaxBrokerageValue(inputs, balance, adjustedBasis));
+        }
+
+        const unrealizedGain = Math.max(0, balance - adjustedBasis);
+        const liquidationTax = inputs.includeFutureLiquidationTax
+          ? unrealizedGain * rate(inputs.futureGainRate)
+          : 0;
+        const netAfterLiquidation = Math.max(0, balance - liquidationTax);
+
+        return {
+          balance,
+          basis: adjustedBasis,
+          annualTaxesPaid,
+          liquidationTax,
+          netAfterLiquidation,
+          yearlyBalances,
+          yearlyNetBalances
+        };
+      }
+
+      function projectedNeed(inputs) {
+        let total = 0;
+        const inflation = inputs.includeEducationInflation ? rate(inputs.educationInflation) : 0;
+        for (let year = 0; year < Math.max(1, inputs.schoolYears); year += 1) {
+          total += inputs.annualEducationCost * (1 + inflation) ** (inputs.yearsUntilSchool + year);
+        }
+        return total;
+      }
+
+      function projectPlanBalances(inputs, start) {
+        const yearlyBalances = [Math.max(0, start)];
+        const expense = inputs.includePlanExpense ? rate(inputs.planExpense) : 0;
+        const annualReturn = Math.max(-0.9, rate(inputs.grossReturn) - expense);
+
+        for (let year = 0; year < Math.max(0, inputs.yearsUntilSchool); year += 1) {
+          yearlyBalances.push(Math.max(0, yearlyBalances[year] * (1 + annualReturn)));
+        }
+
+        return yearlyBalances;
+      }
+
+      function afterTaxNonQualified(withdrawal, balance, contributionBasis, ordinaryRate, penaltyRate, stateRate) {
+        if (withdrawal <= 0 || balance <= 0) return 0;
+        const earningsRatio = clamp((balance - contributionBasis) / balance, 0, 1);
+        const tax = withdrawal * earningsRatio * (ordinaryRate + penaltyRate + stateRate);
+        return Math.max(0, withdrawal - tax);
+      }
+
+      function calculate(inputs) {
+        const valueToMove = inputs.brokerageValue * rate(inputs.movePercent);
+        const basisMoved =
+          inputs.brokerageValue > 0 ? inputs.costBasis * (valueToMove / inputs.brokerageValue) : 0;
+        const unrealizedGain = valueToMove - basisMoved;
+        const taxableSaleGain = Math.max(0, unrealizedGain - Math.max(0, inputs.existingLosses));
+        const saleRate = inputs.saleTaxMode === "long" ? inputs.longTermRate : inputs.ordinaryRate;
+        const niitTax = inputs.includeSaleTax ? incrementalNiit(inputs, taxableSaleGain) : 0;
+        const saleTax = inputs.includeSaleTax
+          ? taxableSaleGain * (rate(saleRate) + rate(inputs.stateGainRate)) + niitTax
+          : 0;
+        const stateBenefit = inputs.includeStateBenefit
+          ? Math.min(valueToMove, Math.max(0, inputs.stateContributionCap)) * rate(inputs.stateBenefitRate)
+          : 0;
+        const planStart = Math.max(
+          0,
+          valueToMove -
+            (inputs.payTaxFromSale ? saleTax : 0) +
+            (inputs.reinvestStateBenefit ? stateBenefit : 0)
+        );
+        const planYearlyBalances = projectPlanBalances(inputs, planStart);
+        const planBalance = planYearlyBalances[planYearlyBalances.length - 1] || 0;
+        const projectedEducationNeed = projectedNeed(inputs);
+        const excessIfSchool = Math.max(0, planBalance - projectedEducationNeed);
+        const qualifiedUsed = Math.min(planBalance, projectedEducationNeed);
+        const rothShelter = inputs.rothRolloverAllowed
+          ? Math.min(excessIfSchool, Math.max(0, inputs.rothRolloverCap))
+          : 0;
+        const nonQualifiedExcess = Math.max(0, excessIfSchool - rothShelter);
+        const planQualifiedCaseValue = inputs.includeOverfundingRisk
+          ? qualifiedUsed +
+            rothShelter +
+            afterTaxNonQualified(
+              nonQualifiedExcess,
+              planBalance,
+              planStart,
+              rate(inputs.ordinaryRate),
+              rate(inputs.nonQualifiedPenalty),
+              rate(inputs.stateNonQualifiedRate)
+            )
+          : planBalance;
+        const planNoSchoolCaseValue = inputs.includeOverfundingRisk
+          ? afterTaxNonQualified(
+              planBalance,
+              planBalance,
+              planStart,
+              rate(inputs.ordinaryRate),
+              rate(inputs.nonQualifiedPenalty),
+              rate(inputs.stateNonQualifiedRate)
+            )
+          : planBalance;
+        const qualifiedProbability = inputs.includeOverfundingRisk ? rate(inputs.qualifiedUseProbability) : 1;
+        const planExpectedValue =
+          qualifiedProbability * planQualifiedCaseValue +
+          (1 - qualifiedProbability) * planNoSchoolCaseValue;
+
+        const brokerage = projectBrokerage(inputs, valueToMove, basisMoved);
+        const chartPoints = planYearlyBalances.map((plan, year) => ({
+          year,
+          plan,
+          brokerage: brokerage.yearlyNetBalances[year] || brokerage.netAfterLiquidation
+        }));
+        const averageBrokerage =
+          brokerage.yearlyNetBalances.reduce((sum, item) => sum + item, 0) /
+          brokerage.yearlyNetBalances.length;
+        const averagePlan = (planStart + planBalance) / 2;
+        const aidImpact = inputs.aidEligible
+          ? (averagePlan * rate(inputs.planAidRate) -
+              averageBrokerage * rate(inputs.brokerageAidRate)) *
+            Math.max(0, inputs.aidYears)
+          : 0;
+        const expectedDelta = planExpectedValue - brokerage.netAfterLiquidation - aidImpact;
+        const qualifiedDelta = planQualifiedCaseValue - brokerage.netAfterLiquidation - aidImpact;
+        const giftFlagAmount = Math.max(
+          0,
+          inputs.includeGiftCheck
+            ? valueToMove -
+                Math.max(1, inputs.giftDonors) * Math.max(0, inputs.giftAnnualExclusion)
+            : 0
+        );
+        const moveScore =
+          brokerage.netAfterLiquidation > 0
+            ? expectedDelta / brokerage.netAfterLiquidation
+            : expectedDelta > 0
+              ? 1
+              : 0;
+
+        return {
+          valueToMove,
+          basisMoved,
+          unrealizedGain,
+          taxableSaleGain,
+          saleTax,
+          niitTax,
+          stateBenefit,
+          planStart,
+          planBalance,
+          planExpectedValue,
+          planQualifiedCaseValue,
+          planNoSchoolCaseValue,
+          planExcessIfSchool: excessIfSchool,
+          planYearlyBalances,
+          projectedEducationNeed,
+          brokerage,
+          chartPoints,
+          aidImpact,
+          expectedDelta,
+          qualifiedDelta,
+          giftFlagAmount,
+          moveScore
+        };
+      }
+
+      function createTooltip(text) {
+        const tip = document.createElement("em");
+        tip.className = "tooltip";
+        tip.setAttribute("aria-label", text);
+        tip.tabIndex = 0;
+        tip.textContent = "?";
+        return tip;
+      }
+
+      function getSliderSpec(field) {
+        if (!field.slider) return null;
+        return typeof field.slider === "function" ? field.slider(state) : field.slider;
+      }
+
+      function isDisabled(field) {
+        return typeof field.disabled === "function" ? field.disabled(state) : Boolean(field.disabled);
+      }
+
+      function normalizeNumber(field, value) {
+        let next = Number.isFinite(value) ? value : defaultInputs[field.key];
+        if (field.clamp) {
+          const min = typeof field.min === "number" ? field.min : -Infinity;
+          const max = typeof field.max === "number" ? field.max : Infinity;
+          next = Math.min(max, Math.max(min, next));
+        }
+        return next;
+      }
+
+      function setNumberValue(field, value) {
+        state[field.key] = normalizeNumber(field, value);
+        update();
+      }
+
+      function buildNumberControl(field) {
+        const label = document.createElement("label");
+        label.className = "field";
+
+        const labelText = document.createElement("span");
+        labelText.className = "field-label";
+        labelText.append(document.createTextNode(field.label));
+        if (fieldExplanations[field.label]) {
+          labelText.append(createTooltip(fieldExplanations[field.label]));
+        }
+        label.append(labelText);
+
+        const shell = document.createElement("div");
+        shell.className = "input-shell";
+        if (field.prefix) {
+          const prefix = document.createElement("b");
+          prefix.textContent = field.prefix;
+          shell.append(prefix);
+        }
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = field.step || 1000;
+        if (typeof field.min === "number") input.min = field.min;
+        if (typeof field.max === "number") input.max = field.max;
+        input.addEventListener("input", () => setNumberValue(field, Number(input.value)));
+        shell.append(input);
+
+        if (field.suffix) {
+          const suffix = document.createElement("b");
+          suffix.textContent = field.suffix;
+          shell.append(suffix);
+        }
+        label.append(shell);
+
+        let range = null;
+        if (field.slider) {
+          range = document.createElement("input");
+          range.className = "range";
+          range.type = "range";
+          range.addEventListener("input", () => setNumberValue(field, Number(range.value)));
+          label.append(range);
+        }
+
+        if (field.hint) {
+          const small = document.createElement("small");
+          small.textContent = field.hint;
+          label.append(small);
+        }
+
+        controlRefs.push({ type: "number", field, root: label, input, range });
+        return label;
+      }
+
+      function buildToggleControl(field) {
+        const label = document.createElement("label");
+        label.className = "toggle";
+
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.addEventListener("change", () => {
+          state[field.key] = input.checked;
+          update();
+        });
+        label.append(input);
+
+        const knob = document.createElement("i");
+        knob.setAttribute("aria-hidden", "true");
+        label.append(knob);
+
+        const labelText = document.createElement("span");
+        labelText.className = "toggle-label";
+        labelText.append(document.createTextNode(field.label));
+        if (field.explanation) {
+          labelText.append(createTooltip(field.explanation));
+        }
+        label.append(labelText);
+
+        if (field.hint) {
+          const small = document.createElement("small");
+          small.textContent = field.hint;
+          label.append(small);
+        }
+
+        controlRefs.push({ type: "toggle", field, root: label, input });
+        return label;
+      }
+
+      function buildSelectControl(field) {
+        const label = document.createElement("label");
+        label.className = "field";
+
+        const labelText = document.createElement("span");
+        labelText.className = "field-label";
+        labelText.textContent = field.label;
+        label.append(labelText);
+
+        const select = document.createElement("select");
+        field.options.forEach((option) => {
+          const node = document.createElement("option");
+          node.value = option.value;
+          node.textContent = option.label;
+          select.append(node);
+        });
+        select.addEventListener("change", () => {
+          state[field.key] = select.value;
+          update();
+        });
+        label.append(select);
+
+        controlRefs.push({ type: "select", field, root: label, select });
+        return label;
+      }
+
+      function buildControls() {
+        const root = document.getElementById("controls");
+        controlsConfig.forEach((section) => {
+          const details = document.createElement("details");
+          if (section.open) details.open = true;
+
+          const summary = document.createElement("summary");
+          summary.textContent = section.title;
+          details.append(summary);
+
+          const grid = document.createElement("div");
+          grid.className = section.grid;
+          section.controls.forEach((field) => {
+            if (field.type === "number") grid.append(buildNumberControl(field));
+            if (field.type === "toggle") grid.append(buildToggleControl(field));
+            if (field.type === "select") grid.append(buildSelectControl(field));
+          });
+          details.append(grid);
+          root.append(details);
+        });
+      }
+
+      function updateControls() {
+        controlRefs.forEach((ref) => {
+          const disabled = isDisabled(ref.field);
+          ref.root.classList.toggle("is-disabled", disabled);
+
+          if (ref.type === "number") {
+            ref.input.value = Number.isFinite(state[ref.field.key]) ? state[ref.field.key] : 0;
+            ref.input.disabled = disabled;
+            if (ref.range) {
+              const spec = getSliderSpec(ref.field);
+              ref.range.min = spec.min;
+              ref.range.max = spec.max;
+              ref.range.step = spec.step;
+              ref.range.value = clamp(state[ref.field.key], spec.min, spec.max);
+              ref.range.disabled = disabled;
+            }
+          }
+
+          if (ref.type === "toggle") {
+            ref.input.checked = Boolean(state[ref.field.key]);
+            ref.input.disabled = disabled;
+          }
+
+          if (ref.type === "select") {
+            ref.select.value = state[ref.field.key];
+            ref.select.disabled = disabled;
+          }
+        });
+      }
+
+      function setText(id, value) {
+        document.getElementById(id).textContent = value;
+      }
+
+      function setMetricTone(id, tone) {
+        const node = document.getElementById(id);
+        node.classList.toggle("good", tone === "good");
+        node.classList.toggle("bad", tone === "bad");
+      }
+
+      function renderDrivers(scenario) {
+        const drivers = document.getElementById("drivers");
+        drivers.textContent = "";
+        const rows = [
+          `Selling now realizes ${currency.format(scenario.taxableSaleGain)} of taxable gain after entered loss offsets.`,
+          `The 529 starts with ${currency.format(scenario.planStart)} and grows to ${currency.format(scenario.planBalance)} before school.`,
+          `If education happens, the modeled excess 529 balance is ${currency.format(scenario.planExcessIfSchool)} before Roth rollover or nonqualified withdrawal treatment.`,
+          `Financial-aid impact is ${scenario.aidImpact === 0 ? "off" : currency.format(scenario.aidImpact)}; parent-owned brokerage and parent-owned 529 assets often have similar FAFSA treatment, so this is editable.`
+        ];
+
+        if (scenario.giftFlagAmount > 0) {
+          rows.push(
+            `The moved amount exceeds the entered annual gift exclusion by ${currency.format(scenario.giftFlagAmount)}. That does not automatically mean gift tax is due, but Form 709 planning may matter.`
+          );
+        }
+
+        rows.forEach((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          drivers.append(li);
+        });
+      }
+
+      function makeSvg(tag, attributes = {}, text = "") {
+        const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        Object.entries(attributes).forEach(([key, value]) => {
+          node.setAttribute(key, value);
+        });
+        if (text) node.textContent = text;
+        return node;
+      }
+
+      function renderChart(points, schoolYear) {
+        const width = 760;
+        const height = 280;
+        const pad = { top: 24, right: 26, bottom: 36, left: 70 };
+        const plotWidth = width - pad.left - pad.right;
+        const plotHeight = height - pad.top - pad.bottom;
+        const maxValue = Math.max(1, ...points.flatMap((point) => [point.plan, point.brokerage]));
+        const topValue = maxValue * 1.1;
+        const last = points[points.length - 1] || { plan: 0, brokerage: 0, year: 0 };
+        const xFor = (index) =>
+          pad.left + (points.length <= 1 ? 0 : (index / (points.length - 1)) * plotWidth);
+        const yFor = (value) =>
+          pad.top + plotHeight - (Math.max(0, value) / topValue) * plotHeight;
+        const planLine = points.map((point, index) => `${xFor(index)},${yFor(point.plan)}`).join(" ");
+        const brokerageLine = points
+          .map((point, index) => `${xFor(index)},${yFor(point.brokerage)}`)
+          .join(" ");
+        const gridValues = [topValue, topValue * 0.66, topValue * 0.33, 0];
+        const tickIndexes = Array.from(new Set([0, Math.floor((points.length - 1) / 2), points.length - 1]));
+        const svg = document.getElementById("line-chart");
+        svg.textContent = "";
+        svg.setAttribute(
+          "aria-label",
+          `529 value ${currency.format(last.plan)}; brokerage value ${currency.format(last.brokerage)} after ${schoolYear} years.`
+        );
+
+        gridValues.forEach((value) => {
+          const group = makeSvg("g");
+          group.append(
+            makeSvg("line", {
+              x1: pad.left,
+              x2: width - pad.right,
+              y1: yFor(value),
+              y2: yFor(value),
+              class: "chart-grid"
+            })
+          );
+          group.append(
+            makeSvg(
+              "text",
+              { x: pad.left - 12, y: yFor(value) + 4, class: "chart-label" },
+              compactCurrency.format(value)
+            )
+          );
+          svg.append(group);
+        });
+
+        tickIndexes.forEach((index) => {
+          svg.append(
+            makeSvg(
+              "text",
+              { x: xFor(index), y: height - 10, class: "chart-x-label" },
+              index === 0 ? "Now" : `Y${points[index]?.year || index}`
+            )
+          );
+        });
+
+        svg.append(makeSvg("polyline", { points: brokerageLine, class: "brokerage-line" }));
+        svg.append(makeSvg("polyline", { points: planLine, class: "plan-line" }));
+
+        points.forEach((point, index) => {
+          const group = makeSvg("g");
+          const planPoint = makeSvg("circle", {
+            cx: xFor(index),
+            cy: yFor(point.plan),
+            r: 4,
+            class: "plan-point"
+          });
+          planPoint.append(makeSvg("title", {}, `Year ${point.year}: 529 ${currency.format(point.plan)}`));
+
+          const brokeragePoint = makeSvg("circle", {
+            cx: xFor(index),
+            cy: yFor(point.brokerage),
+            r: 4,
+            class: "brokerage-point"
+          });
+          brokeragePoint.append(
+            makeSvg("title", {}, `Year ${point.year}: brokerage ${currency.format(point.brokerage)}`)
+          );
+
+          group.append(planPoint, brokeragePoint);
+          svg.append(group);
+        });
+      }
+
+      function renderSpark(values) {
+        const root = document.getElementById("spark");
+        root.textContent = "";
+        const max = Math.max(...values, 1);
+        values.forEach((value) => {
+          const bar = document.createElement("span");
+          bar.style.height = `${Math.max(10, (value / max) * 100)}%`;
+          root.append(bar);
+        });
+      }
+
+      function updateResult(scenario) {
+        const recommendation =
+          Math.abs(scenario.moveScore) < 0.03
+            ? "Close call"
+            : scenario.expectedDelta > 0
+              ? "529 looks better"
+              : "Keep brokerage looks better";
+        const deltaTone = scenario.expectedDelta >= 0 ? "good" : "bad";
+        const planAfterAid = scenario.planExpectedValue - scenario.aidImpact;
+        const brokerageValue = scenario.brokerage.netAfterLiquidation;
+        const maxBar = Math.max(planAfterAid, brokerageValue, 1);
+        const last = scenario.chartPoints[scenario.chartPoints.length - 1] || {
+          plan: 0,
+          brokerage: 0
+        };
+
+        setText("recommendation", recommendation);
+        setText("expected-advantage", currency.format(Math.abs(scenario.expectedDelta)));
+        setText("sale-tax", currency.format(scenario.saleTax));
+        setText("state-benefit", currency.format(scenario.stateBenefit));
+        setText("education-need", currency.format(scenario.projectedEducationNeed));
+        setMetricTone("expected-advantage-metric", deltaTone);
+        setMetricTone("sale-tax-metric", scenario.saleTax > 0 ? "bad" : "");
+        setMetricTone("state-benefit-metric", scenario.stateBenefit > 0 ? "good" : "");
+
+        setText("bar-plan-value", currency.format(planAfterAid));
+        setText("bar-brokerage-value", currency.format(brokerageValue));
+        document.getElementById("bar-plan").style.width = `${Math.max(4, (planAfterAid / maxBar) * 100)}%`;
+        document.getElementById("bar-brokerage").style.width = `${Math.max(4, (brokerageValue / maxBar) * 100)}%`;
+
+        renderChart(scenario.chartPoints, state.yearsUntilSchool);
+        setText("chart-plan", currency.format(last.plan));
+        setText("chart-brokerage", currency.format(last.brokerage));
+        setText("chart-gap", currency.format(last.plan - last.brokerage));
+        setText("chart-gap-label", last.plan >= last.brokerage ? "529 ahead" : "Brokerage ahead");
+
+        setText("qualified-case", currency.format(scenario.planQualifiedCaseValue));
+        setText("no-school-case", currency.format(scenario.planNoSchoolCaseValue));
+        setText("brokerage-before-sale", currency.format(scenario.brokerage.balance));
+        renderDrivers(scenario);
+        renderSpark(scenario.brokerage.yearlyBalances);
+        setText(
+          "current-law-notes",
+          `The annual gift exclusion entered here is ${currency.format(state.giftAnnualExclusion)} per donor; the federal nonqualified 529 penalty is modeled at ${pct(state.nonQualifiedPenalty)} on earnings; the 529 to Roth IRA fallback is capped here at ${currency.format(state.rothRolloverCap)}.`
+        );
+      }
+
+      function update() {
+        updateControls();
+        updateResult(calculate(state));
+      }
+
+      document.getElementById("reset-button").addEventListener("click", () => {
+        Object.assign(state, defaultInputs);
+        update();
+      });
+
+      buildControls();
+      update();
+    </script>
+  </body>
+</html>
