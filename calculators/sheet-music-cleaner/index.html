@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sheet Music Cleaner</title>
+    <style>
+      :root {
+        --background: #f4f5f1;
+        --foreground: #202420;
+        --ink: #101411;
+        --muted: #66706b;
+        --panel: #ffffff;
+        --panel-soft: #fbfbf7;
+        --line: #d8ddd5;
+        --line-strong: #b5beb6;
+        --teal: #176c64;
+        --teal-soft: #dff0ed;
+        --blue: #255f9f;
+        --blue-soft: #dfeaf6;
+        --amber: #966f24;
+        --amber-soft: #f2e7ce;
+        --red: #a13f3b;
+        --shadow: rgba(28, 37, 32, 0.11);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--background);
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          linear-gradient(135deg, rgba(37, 95, 159, 0.08), transparent 32rem),
+          linear-gradient(315deg, rgba(23, 108, 100, 0.08), transparent 28rem),
+          var(--background);
+        color: var(--foreground);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.52;
+      }
+
+      .site-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 24px 0;
+      }
+
+      .site-strip a {
+        color: var(--blue);
+        font-size: 0.86rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .site-strip a:hover {
+        text-decoration: underline;
+      }
+
+      .site-strip span {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+        gap: 24px;
+        min-height: calc(100vh - 40px);
+        padding: 24px;
+      }
+
+      .workspace,
+      .controls {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: 0 22px 60px var(--shadow);
+      }
+
+      .workspace {
+        display: grid;
+        align-content: start;
+        gap: 18px;
+        min-width: 0;
+        padding: 24px;
+      }
+
+      .controls {
+        align-self: start;
+        display: grid;
+        gap: 18px;
+        padding: 20px;
+        position: sticky;
+        top: 18px;
+      }
+
+      .topline {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .eyebrow,
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      .eyebrow {
+        margin-bottom: 8px;
+        color: var(--teal);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin-bottom: 0;
+        color: var(--ink);
+        font-size: clamp(2rem, 5vw, 4rem);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-bottom: 0;
+        color: var(--ink);
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      h3 {
+        margin-bottom: 8px;
+        color: var(--ink);
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .status {
+        flex: 0 0 auto;
+        max-width: 260px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+
+      .status.busy {
+        border-color: #b4c8dc;
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .status.ready {
+        border-color: #b4d3cd;
+        background: var(--teal-soft);
+        color: var(--teal);
+      }
+
+      .status.error {
+        border-color: #dfb7b4;
+        background: #f8e4e2;
+        color: var(--red);
+      }
+
+      .upload-zone {
+        display: grid;
+        place-items: center;
+        gap: 10px;
+        min-height: 168px;
+        padding: 22px;
+        border: 1px dashed var(--line-strong);
+        border-radius: 8px;
+        background:
+          linear-gradient(0deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.72)),
+          repeating-linear-gradient(
+            135deg,
+            rgba(23, 108, 100, 0.06),
+            rgba(23, 108, 100, 0.06) 8px,
+            rgba(37, 95, 159, 0.05) 8px,
+            rgba(37, 95, 159, 0.05) 16px
+          );
+        text-align: center;
+      }
+
+      .upload-zone.dragging {
+        border-color: var(--teal);
+        background: var(--teal-soft);
+      }
+
+      .upload-zone p {
+        margin: 0;
+        max-width: 520px;
+        font-size: 0.92rem;
+      }
+
+      .primary-button,
+      .secondary-button,
+      .icon-button {
+        min-height: 38px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-weight: 800;
+      }
+
+      .primary-button {
+        padding: 0 16px;
+        background: var(--teal);
+        color: white;
+      }
+
+      .primary-button:hover:not(:disabled) {
+        background: #105d56;
+      }
+
+      .secondary-button {
+        padding: 0 14px;
+        border-color: var(--line-strong);
+        background: var(--panel);
+        color: var(--foreground);
+      }
+
+      .secondary-button:hover:not(:disabled),
+      .icon-button:hover:not(:disabled) {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .count-pill {
+        min-width: 82px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .page-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 14px;
+      }
+
+      .empty-state {
+        grid-column: 1 / -1;
+        display: grid;
+        place-items: center;
+        min-height: 220px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-soft);
+        color: var(--muted);
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .page-card {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-width: 0;
+        min-height: 310px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        overflow: hidden;
+      }
+
+      .page-card header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-soft);
+      }
+
+      .page-card strong {
+        min-width: 0;
+        color: var(--ink);
+        font-size: 0.86rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .card-actions {
+        display: flex;
+        gap: 4px;
+      }
+
+      .icon-button {
+        display: inline-grid;
+        place-items: center;
+        width: 32px;
+        min-height: 32px;
+        padding: 0;
+        border-color: var(--line);
+        background: white;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      .preview-frame {
+        display: grid;
+        place-items: center;
+        min-height: 230px;
+        padding: 10px;
+        background:
+          linear-gradient(45deg, #eff1ec 25%, transparent 25%),
+          linear-gradient(-45deg, #eff1ec 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #eff1ec 75%),
+          linear-gradient(-45deg, transparent 75%, #eff1ec 75%),
+          #f8f9f6;
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+        background-size: 16px 16px;
+      }
+
+      .preview-frame img {
+        display: block;
+        max-width: 100%;
+        max-height: 360px;
+        border: 1px solid #d5d9d2;
+        background: white;
+        box-shadow: 0 8px 24px rgba(31, 37, 33, 0.12);
+      }
+
+      .preview-placeholder {
+        display: grid;
+        place-items: center;
+        width: min(150px, 70%);
+        aspect-ratio: 3 / 4;
+        border: 1px solid var(--line);
+        background: white;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .page-card footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 38px;
+        padding: 8px 10px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .control-group {
+        display: grid;
+        gap: 10px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+
+      .control-group:first-of-type {
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .control-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .label-line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--foreground);
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .value-readout {
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--teal);
+      }
+
+      select {
+        width: 100%;
+        min-height: 38px;
+        padding: 0 10px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: white;
+        color: var(--foreground);
+        font-weight: 700;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--foreground);
+        font-size: 0.86rem;
+        font-weight: 800;
+      }
+
+      .toggle-row input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--teal);
+      }
+
+      .note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .progress {
+        height: 8px;
+        border-radius: 999px;
+        background: #e7ebe5;
+        overflow: hidden;
+      }
+
+      .progress span {
+        display: block;
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, var(--teal), var(--blue));
+        transition: width 0.2s ease;
+      }
+
+      @media (max-width: 980px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          position: static;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .site-strip {
+          padding: 10px 14px 0;
+        }
+
+        .app-shell {
+          gap: 14px;
+          padding: 14px;
+        }
+
+        .workspace,
+        .controls {
+          padding: 16px;
+        }
+
+        .topline,
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .toolbar-actions {
+          justify-content: stretch;
+        }
+
+        .toolbar-actions button {
+          flex: 1 1 130px;
+        }
+
+        .status {
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-strip">
+      <a href="/calculators/">calculators</a>
+      <span>local browser processing</span>
+    </header>
+
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="app-title">
+        <div class="topline">
+          <div>
+            <p class="eyebrow">PDF cleanup</p>
+            <h1 id="app-title">Sheet Music Cleaner</h1>
+          </div>
+          <div id="status" class="status ready" role="status" aria-live="polite">Ready</div>
+        </div>
+
+        <div id="dropZone" class="upload-zone" tabindex="0">
+          <input id="fileInput" type="file" accept="image/*" multiple hidden />
+          <button id="chooseButton" class="primary-button" type="button">Select Photos</button>
+          <p id="fileSummary">Drop page photos here or choose image files.</p>
+        </div>
+
+        <div class="toolbar">
+          <div id="pageCount" class="count-pill">0 pages</div>
+          <div class="toolbar-actions">
+            <button id="clearButton" class="secondary-button" type="button" disabled>Clear</button>
+            <button id="processButton" class="primary-button" type="button" disabled>Clean Pages</button>
+            <button id="downloadButton" class="secondary-button" type="button" disabled>
+              Download PDF
+            </button>
+          </div>
+        </div>
+
+        <div id="pageList" class="page-list"></div>
+      </section>
+
+      <aside class="controls" aria-labelledby="controls-title">
+        <h2 id="controls-title">Controls</h2>
+
+        <div class="control-group">
+          <div class="control-row">
+            <div class="label-line">
+              <label for="cleanupStrength">Cleanup strength</label>
+              <span id="cleanupReadout" class="value-readout">72</span>
+            </div>
+            <input id="cleanupStrength" type="range" min="30" max="95" value="72" />
+          </div>
+
+          <label class="toggle-row" for="preservePencil">
+            <span>Preserve pencil detail</span>
+            <input id="preservePencil" type="checkbox" checked />
+          </label>
+
+          <label class="toggle-row" for="autoCrop">
+            <span>Trim page edges</span>
+            <input id="autoCrop" type="checkbox" checked />
+          </label>
+        </div>
+
+        <div class="control-group">
+          <div class="control-row">
+            <div class="label-line">
+              <label for="pdfSize">PDF page size</label>
+            </div>
+            <select id="pdfSize">
+              <option value="letter">Letter</option>
+              <option value="a4">A4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="progress" aria-hidden="true"><span id="progressFill"></span></div>
+          <p class="note" id="privacyNote">
+            Images are processed in this browser tab. They are not uploaded.
+          </p>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      const state = {
+        items: [],
+        busy: false,
+      };
+
+      const els = {
+        fileInput: document.getElementById("fileInput"),
+        chooseButton: document.getElementById("chooseButton"),
+        dropZone: document.getElementById("dropZone"),
+        fileSummary: document.getElementById("fileSummary"),
+        pageCount: document.getElementById("pageCount"),
+        pageList: document.getElementById("pageList"),
+        clearButton: document.getElementById("clearButton"),
+        processButton: document.getElementById("processButton"),
+        downloadButton: document.getElementById("downloadButton"),
+        status: document.getElementById("status"),
+        cleanupStrength: document.getElementById("cleanupStrength"),
+        cleanupReadout: document.getElementById("cleanupReadout"),
+        preservePencil: document.getElementById("preservePencil"),
+        autoCrop: document.getElementById("autoCrop"),
+        pdfSize: document.getElementById("pdfSize"),
+        progressFill: document.getElementById("progressFill"),
+      };
+
+      els.chooseButton.addEventListener("click", () => els.fileInput.click());
+      els.fileInput.addEventListener("change", (event) => addFiles(event.target.files));
+      els.clearButton.addEventListener("click", clearPages);
+      els.processButton.addEventListener("click", processPages);
+      els.downloadButton.addEventListener("click", downloadPdf);
+      els.cleanupStrength.addEventListener("input", () => {
+        els.cleanupReadout.textContent = els.cleanupStrength.value;
+        markDirty();
+      });
+      els.preservePencil.addEventListener("change", markDirty);
+      els.autoCrop.addEventListener("change", markDirty);
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        els.dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          els.dropZone.classList.add("dragging");
+        });
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        els.dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          els.dropZone.classList.remove("dragging");
+        });
+      });
+
+      els.dropZone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
+      els.dropZone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          els.fileInput.click();
+        }
+      });
+
+      function getSettings() {
+        return {
+          strength: Number(els.cleanupStrength.value),
+          preservePencil: els.preservePencil.checked,
+          autoCrop: els.autoCrop.checked,
+          pdfSize: els.pdfSize.value,
+        };
+      }
+
+      function setStatus(message, tone = "ready") {
+        els.status.textContent = message;
+        els.status.className = `status ${tone}`;
+      }
+
+      function setProgress(value) {
+        els.progressFill.style.width = `${Math.max(0, Math.min(100, value))}%`;
+      }
+
+      function addFiles(fileList) {
+        const files = Array.from(fileList || [])
+          .filter((file) => file.type.startsWith("image/"))
+          .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+        if (!files.length) {
+          setStatus("No image files found", "error");
+          return;
+        }
+
+        const nextItems = files.map((file) => ({
+          id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          file,
+          name: file.name,
+          cleanedCanvas: null,
+          previewUrl: "",
+          dimensions: "",
+          dirty: true,
+        }));
+
+        state.items = state.items.concat(nextItems);
+        els.fileInput.value = "";
+        setStatus(`${files.length} photo${files.length === 1 ? "" : "s"} added`);
+        render();
+      }
+
+      function clearPages() {
+        state.items.forEach((item) => {
+          if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        });
+        state.items = [];
+        setProgress(0);
+        setStatus("Ready");
+        render();
+      }
+
+      function markDirty() {
+        state.items.forEach((item) => {
+          item.dirty = true;
+        });
+        els.downloadButton.disabled = true;
+        if (state.items.length) {
+          setStatus("Settings changed");
+        }
+        render();
+      }
+
+      function movePage(index, direction) {
+        const nextIndex = index + direction;
+        if (nextIndex < 0 || nextIndex >= state.items.length) return;
+        const [item] = state.items.splice(index, 1);
+        state.items.splice(nextIndex, 0, item);
+        render();
+      }
+
+      function removePage(index) {
+        const [item] = state.items.splice(index, 1);
+        if (item && item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        render();
+      }
+
+      function render() {
+        const count = state.items.length;
+        const cleanedCount = state.items.filter((item) => item.cleanedCanvas && !item.dirty).length;
+
+        els.pageCount.textContent = `${count} page${count === 1 ? "" : "s"}`;
+        els.fileSummary.textContent = count
+          ? `${count} page photo${count === 1 ? "" : "s"} selected`
+          : "Drop page photos here or choose image files.";
+        els.clearButton.disabled = !count || state.busy;
+        els.processButton.disabled = !count || state.busy;
+        els.downloadButton.disabled = !count || cleanedCount !== count || state.busy;
+
+        if (!count) {
+          els.pageList.innerHTML = '<div class="empty-state">No pages selected</div>';
+          return;
+        }
+
+        els.pageList.innerHTML = state.items
+          .map((item, index) => {
+            const img = item.previewUrl
+              ? `<img src="${item.previewUrl}" alt="Cleaned preview of ${escapeHtml(item.name)}" />`
+              : '<div class="preview-placeholder">Pending</div>';
+            const status = item.cleanedCanvas && !item.dirty ? "cleaned" : "pending";
+            const dimensions = item.dimensions || "";
+            return `
+              <article class="page-card">
+                <header>
+                  <strong title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</strong>
+                  <div class="card-actions">
+                    <button class="icon-button" type="button" title="Move up" data-action="up" data-index="${index}" ${index === 0 ? "disabled" : ""}>&uarr;</button>
+                    <button class="icon-button" type="button" title="Move down" data-action="down" data-index="${index}" ${index === count - 1 ? "disabled" : ""}>&darr;</button>
+                    <button class="icon-button" type="button" title="Remove" data-action="remove" data-index="${index}">&times;</button>
+                  </div>
+                </header>
+                <div class="preview-frame">${img}</div>
+                <footer><span>${status}</span><span>${escapeHtml(dimensions)}</span></footer>
+              </article>
+            `;
+          })
+          .join("");
+
+        els.pageList.querySelectorAll("button[data-action]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const index = Number(button.dataset.index);
+            const action = button.dataset.action;
+            if (action === "up") movePage(index, -1);
+            if (action === "down") movePage(index, 1);
+            if (action === "remove") removePage(index);
+          });
+        });
+      }
+
+      async function processPages() {
+        if (!state.items.length || state.busy) return;
+        state.busy = true;
+        setProgress(0);
+        render();
+
+        try {
+          const settings = getSettings();
+          for (let index = 0; index < state.items.length; index += 1) {
+            const item = state.items[index];
+            setStatus(`Cleaning ${index + 1} of ${state.items.length}`, "busy");
+            await waitForFrame();
+            const result = await cleanImage(item.file, settings);
+
+            if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+            item.cleanedCanvas = result.canvas;
+            item.previewUrl = result.previewUrl;
+            item.dimensions = `${result.canvas.width} x ${result.canvas.height}`;
+            item.dirty = false;
+            setProgress(((index + 1) / state.items.length) * 100);
+            render();
+          }
+
+          setStatus("Pages cleaned");
+        } catch (error) {
+          console.error(error);
+          setStatus("Could not clean one of the images", "error");
+        } finally {
+          state.busy = false;
+          render();
+        }
+      }
+
+      async function cleanImage(file, settings) {
+        const image = await loadImage(file);
+        const sourceCanvas = document.createElement("canvas");
+        const maxLongEdge = 2600;
+        const scale = Math.min(1, maxLongEdge / Math.max(image.naturalWidth, image.naturalHeight));
+        const width = Math.max(1, Math.round(image.naturalWidth * scale));
+        const height = Math.max(1, Math.round(image.naturalHeight * scale));
+        sourceCanvas.width = width;
+        sourceCanvas.height = height;
+
+        const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+        sourceContext.fillStyle = "white";
+        sourceContext.fillRect(0, 0, width, height);
+        sourceContext.drawImage(image, 0, 0, width, height);
+
+        const sourceData = sourceContext.getImageData(0, 0, width, height);
+        const gray = buildGray(sourceData.data);
+        const crop = settings.autoCrop ? estimateCrop(gray, width, height) : { x: 0, y: 0, w: width, h: height };
+        const canvas = normalizePage(sourceData.data, gray, width, height, crop, settings);
+        const previewUrl = await canvasToObjectUrl(canvas, "image/jpeg", 0.86);
+        return { canvas, previewUrl };
+      }
+
+      function loadImage(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const image = new Image();
+          image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+          };
+          image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error(`Could not load ${file.name}`));
+          };
+          image.src = url;
+        });
+      }
+
+      function buildGray(data) {
+        const gray = new Uint8Array(data.length / 4);
+        for (let source = 0, target = 0; source < data.length; source += 4, target += 1) {
+          gray[target] = Math.round(data[source] * 0.299 + data[source + 1] * 0.587 + data[source + 2] * 0.114);
+        }
+        return gray;
+      }
+
+      function estimateCrop(gray, width, height) {
+        const hist = new Uint32Array(256);
+        const step = Math.max(1, Math.floor(Math.min(width, height) / 900));
+        for (let y = 0; y < height; y += step) {
+          const row = y * width;
+          for (let x = 0; x < width; x += step) {
+            hist[gray[row + x]] += 1;
+          }
+        }
+
+        const brightCut = Math.max(135, Math.min(226, percentileFromHist(hist, 0.82) - 18));
+        const top = findCropEdge(gray, width, height, brightCut, true, 0, 1);
+        const bottom = findCropEdge(gray, width, height, brightCut, true, height - 1, -1);
+        const left = findCropEdge(gray, width, height, brightCut, false, 0, 1);
+        const right = findCropEdge(gray, width, height, brightCut, false, width - 1, -1);
+
+        if (top == null || bottom == null || left == null || right == null) {
+          return { x: 0, y: 0, w: width, h: height };
+        }
+
+        const padX = Math.round(width * 0.012);
+        const padY = Math.round(height * 0.012);
+        const x = Math.max(0, left - padX);
+        const y = Math.max(0, top - padY);
+        const cropRight = Math.min(width - 1, right + padX);
+        const cropBottom = Math.min(height - 1, bottom + padY);
+        const w = cropRight - x + 1;
+        const h = cropBottom - y + 1;
+
+        if (w < width * 0.45 || h < height * 0.45) {
+          return { x: 0, y: 0, w: width, h: height };
+        }
+
+        return { x, y, w, h };
+      }
+
+      function findCropEdge(gray, width, height, brightCut, scanRows, start, direction) {
+        const limit = scanRows ? height : width;
+        const lineLength = scanRows ? width : height;
+        const sampleStep = Math.max(1, Math.floor(lineLength / 420));
+        const needed = 4;
+        let streak = 0;
+
+        for (let pos = start; pos >= 0 && pos < limit; pos += direction) {
+          let bright = 0;
+          let samples = 0;
+
+          for (let cross = 0; cross < lineLength; cross += sampleStep) {
+            const x = scanRows ? cross : pos;
+            const y = scanRows ? pos : cross;
+            if (gray[y * width + x] >= brightCut) bright += 1;
+            samples += 1;
+          }
+
+          if (bright / samples > 0.31) {
+            streak += 1;
+            if (streak >= needed) return pos - direction * (needed - 1);
+          } else {
+            streak = 0;
+          }
+        }
+
+        return null;
+      }
+
+      function normalizePage(sourceData, gray, sourceWidth, sourceHeight, crop, settings) {
+        const outputCanvas = document.createElement("canvas");
+        outputCanvas.width = crop.w;
+        outputCanvas.height = crop.h;
+        const outputContext = outputCanvas.getContext("2d");
+        const imageData = outputContext.createImageData(crop.w, crop.h);
+        const output = imageData.data;
+
+        const grid = buildBackgroundGrid(gray, sourceWidth, sourceHeight, crop);
+        const strength = settings.strength / 100;
+        const blackPoint = settings.preservePencil ? 54 : 72;
+        const whitePoint = settings.preservePencil ? 235 - strength * 38 : 226 - strength * 48;
+        const whiteSnap = settings.preservePencil ? 249 - strength * 16 : 238 - strength * 28;
+        const contrast = settings.preservePencil ? 1.04 + strength * 0.42 : 1.12 + strength * 0.6;
+
+        for (let y = 0; y < crop.h; y += 1) {
+          const sourceY = crop.y + y;
+          const gy = Math.min(grid.height - 1, Math.floor((y / crop.h) * grid.height));
+
+          for (let x = 0; x < crop.w; x += 1) {
+            const sourceX = crop.x + x;
+            const grayValue = gray[sourceY * sourceWidth + sourceX];
+            const gx = Math.min(grid.width - 1, Math.floor((x / crop.w) * grid.width));
+            const background = Math.max(78, grid.values[gy * grid.width + gx]);
+            let corrected = (grayValue / background) * 248;
+            corrected = (corrected - 128) * contrast + 128;
+            corrected = ((corrected - blackPoint) * 255) / (whitePoint - blackPoint);
+            corrected = clamp255(corrected);
+
+            if (corrected > whiteSnap) corrected = 255;
+            if (!settings.preservePencil && corrected > 198) corrected = 255;
+
+            const target = (y * crop.w + x) * 4;
+            output[target] = corrected;
+            output[target + 1] = corrected;
+            output[target + 2] = corrected;
+            output[target + 3] = sourceData[(sourceY * sourceWidth + sourceX) * 4 + 3];
+          }
+        }
+
+        outputContext.putImageData(imageData, 0, 0);
+        return outputCanvas;
+      }
+
+      function buildBackgroundGrid(gray, sourceWidth, sourceHeight, crop) {
+        const gridWidth = 96;
+        const gridHeight = Math.max(72, Math.min(180, Math.round((crop.h / crop.w) * gridWidth)));
+        const sums = new Float64Array(gridWidth * gridHeight);
+        const counts = new Uint32Array(gridWidth * gridHeight);
+
+        for (let y = 0; y < crop.h; y += 1) {
+          const sourceY = crop.y + y;
+          const gy = Math.min(gridHeight - 1, Math.floor((y / crop.h) * gridHeight));
+          for (let x = 0; x < crop.w; x += 1) {
+            const sourceX = crop.x + x;
+            const gx = Math.min(gridWidth - 1, Math.floor((x / crop.w) * gridWidth));
+            const index = gy * gridWidth + gx;
+            sums[index] += gray[sourceY * sourceWidth + sourceX];
+            counts[index] += 1;
+          }
+        }
+
+        const values = new Float64Array(sums.length);
+        for (let index = 0; index < values.length; index += 1) {
+          values[index] = counts[index] ? sums[index] / counts[index] : 255;
+        }
+
+        let blurred = values;
+        blurred = boxBlur(blurred, gridWidth, gridHeight, 5);
+        blurred = boxBlur(blurred, gridWidth, gridHeight, 5);
+        blurred = boxBlur(blurred, gridWidth, gridHeight, 3);
+        return { values: blurred, width: gridWidth, height: gridHeight };
+      }
+
+      function boxBlur(values, width, height, radius) {
+        const temp = new Float64Array(values.length);
+        const output = new Float64Array(values.length);
+
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            let sum = 0;
+            let count = 0;
+            for (let dx = -radius; dx <= radius; dx += 1) {
+              const sx = Math.max(0, Math.min(width - 1, x + dx));
+              sum += values[y * width + sx];
+              count += 1;
+            }
+            temp[y * width + x] = sum / count;
+          }
+        }
+
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            let sum = 0;
+            let count = 0;
+            for (let dy = -radius; dy <= radius; dy += 1) {
+              const sy = Math.max(0, Math.min(height - 1, y + dy));
+              sum += temp[sy * width + x];
+              count += 1;
+            }
+            output[y * width + x] = sum / count;
+          }
+        }
+
+        return output;
+      }
+
+      async function downloadPdf() {
+        if (!state.items.length || state.busy) return;
+
+        try {
+          setStatus("Building PDF", "busy");
+          state.busy = true;
+          render();
+          const settings = getSettings();
+          const pdfBlob = await buildPdfBlob(state.items, settings.pdfSize);
+          const url = URL.createObjectURL(pdfBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `sheet-music-cleaned-${new Date().toISOString().slice(0, 10)}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 5000);
+          setStatus("PDF downloaded");
+        } catch (error) {
+          console.error(error);
+          setStatus("Could not build PDF", "error");
+        } finally {
+          state.busy = false;
+          render();
+        }
+      }
+
+      async function buildPdfBlob(items, pageSizeKey) {
+        const pageSize = pageSizeKey === "a4" ? { width: 595.28, height: 841.89 } : { width: 612, height: 792 };
+        const enc = new TextEncoder();
+        const chunks = [];
+        const offsets = [0];
+        let byteLength = 0;
+
+        const push = (chunk) => {
+          const bytes = typeof chunk === "string" ? enc.encode(chunk) : chunk;
+          chunks.push(bytes);
+          byteLength += bytes.length;
+        };
+
+        const writeObject = (number, body) => {
+          offsets[number] = byteLength;
+          push(`${number} 0 obj\n${body}\nendobj\n`);
+        };
+
+        const writeStreamObject = (number, dictionary, streamBytes) => {
+          offsets[number] = byteLength;
+          push(`${number} 0 obj\n<< ${dictionary} /Length ${streamBytes.length} >>\nstream\n`);
+          push(streamBytes);
+          push("\nendstream\nendobj\n");
+        };
+
+        const prepared = [];
+        for (const item of items) {
+          if (!item.cleanedCanvas || item.dirty) {
+            throw new Error("Pages must be cleaned before export");
+          }
+          const blob = await canvasToBlob(item.cleanedCanvas, "image/jpeg", 0.92);
+          prepared.push({
+            bytes: new Uint8Array(await blob.arrayBuffer()),
+            width: item.cleanedCanvas.width,
+            height: item.cleanedCanvas.height,
+          });
+        }
+
+        const maxObject = 2 + prepared.length * 3;
+        const pageRefs = prepared.map((_, index) => `${3 + index * 3} 0 R`).join(" ");
+
+        push("%PDF-1.4\n%\u00ff\u00ff\u00ff\u00ff\n");
+        writeObject(1, "<< /Type /Catalog /Pages 2 0 R >>");
+        writeObject(2, `<< /Type /Pages /Kids [${pageRefs}] /Count ${prepared.length} >>`);
+
+        prepared.forEach((page, index) => {
+          const pageObject = 3 + index * 3;
+          const contentObject = pageObject + 1;
+          const imageObject = pageObject + 2;
+          const imageName = `Im${index + 1}`;
+          const margin = 18;
+          const fit = Math.min(
+            (pageSize.width - margin * 2) / page.width,
+            (pageSize.height - margin * 2) / page.height
+          );
+          const drawWidth = page.width * fit;
+          const drawHeight = page.height * fit;
+          const x = (pageSize.width - drawWidth) / 2;
+          const y = (pageSize.height - drawHeight) / 2;
+          const content = `q\n${formatNumber(drawWidth)} 0 0 ${formatNumber(drawHeight)} ${formatNumber(x)} ${formatNumber(y)} cm\n/${imageName} Do\nQ\n`;
+
+          writeObject(
+            pageObject,
+            `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${formatNumber(pageSize.width)} ${formatNumber(pageSize.height)}] /Resources << /XObject << /${imageName} ${imageObject} 0 R >> >> /Contents ${contentObject} 0 R >>`
+          );
+          writeStreamObject(contentObject, "", enc.encode(content));
+          writeStreamObject(
+            imageObject,
+            `/Type /XObject /Subtype /Image /Width ${page.width} /Height ${page.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`,
+            page.bytes
+          );
+        });
+
+        const xrefOffset = byteLength;
+        push(`xref\n0 ${maxObject + 1}\n`);
+        push("0000000000 65535 f \n");
+        for (let index = 1; index <= maxObject; index += 1) {
+          push(`${String(offsets[index]).padStart(10, "0")} 00000 n \n`);
+        }
+        push(`trailer\n<< /Size ${maxObject + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+
+        return new Blob(chunks, { type: "application/pdf" });
+      }
+
+      function canvasToBlob(canvas, type, quality) {
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve(blob);
+              else reject(new Error("Canvas export failed"));
+            },
+            type,
+            quality
+          );
+        });
+      }
+
+      async function canvasToObjectUrl(canvas, type, quality) {
+        return URL.createObjectURL(await canvasToBlob(canvas, type, quality));
+      }
+
+      function percentileFromHist(hist, percentile) {
+        let total = 0;
+        for (const count of hist) total += count;
+        const target = total * percentile;
+        let running = 0;
+        for (let index = 0; index < hist.length; index += 1) {
+          running += hist[index];
+          if (running >= target) return index;
+        }
+        return hist.length - 1;
+      }
+
+      function clamp255(value) {
+        return Math.max(0, Math.min(255, Math.round(value)));
+      }
+
+      function formatNumber(value) {
+        return Number(value.toFixed(3)).toString();
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function waitForFrame() {
+        return new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+
+      render();
+    </script>
+  </body>
+</html>
