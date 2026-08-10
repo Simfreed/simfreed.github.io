@@ -65,6 +65,18 @@ blockquote {
   }
 }
 
+@media (max-width: 575.98px) {
+  .profile {
+    float: none !important;
+    margin-left: 0;
+    margin-bottom: 1.5rem;
+
+    .address p {
+      display: block;
+    }
+  }
+}
+
 @media (min-width: 576px) {
   .profile {
     width: 30%;
@@ -72,6 +84,12 @@ blockquote {
       p { display: block; }
     }
   }
+}
+
+.talk-video {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 800 / 331;
 }
 
 .post-description {
