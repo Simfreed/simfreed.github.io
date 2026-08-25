@@ -20,19 +20,16 @@ social: true  # includes social icons at the bottom of the page
 [//]:<>Life emerges from the collective behavior of myriads of molecules.
 [//]:<>Over the past 100 years biology has been extremely successful at identifying and characterizing important biomolecules.
 [//]:<>Yet, we still lack the collective understanding that would allow us to 
-I am a Staff Bioinformatics Scientist at [Illumina](https://www.illumina.com/) and a theoretical and computational physicist focused on elucidating biological processes in multi-omic data. I joined Illumina as a Senior Bioinformatics Scientist in July 2022 and was promoted to Staff Bioinformatics Scientist in April 2025.
+I am a theoretical and computational physicist with extensive experience developing and leading scientific research across academia and industry. I use physics, statistics, and computation to understand complex biological data, with a particular interest in multi-omic measurements. In recent years, my work has focused on proteomics and development of the [SomaSeq Discovery Assay](https://www.illumina.com/products/by-type/sequencing-kits/library-prep-kits/protein-prep.html).
 
-Before joining Illumina, I was a postdoctoral fellow at Northwestern University with [Madhav Mani](https://madhavmani.com), where I developed computational and mathematical approaches for studying temporal transitions in transcriptomic data and developmental biology. I earned my Ph.D. in Physics from the University of Chicago in 2018 with [Aaron Dinner](https://dinner-group.uchicago.edu/), studying the structure and dynamics of cytoskeletal networks.
+Before joining Illumina in 2022, I was a postdoctoral fellow at the NSF-Simons Center for Quantitative Biology at Northwestern University with [Madhav Mani](https://madhavmani.com), where I studied developmental transitions in transcriptomic data. I earned my Ph.D. in Physics from the University of Chicago with [Aaron Dinner](https://dinner-group.uchicago.edu/), studying the structure and dynamics of cytoskeletal networks.
 
-I use physics, mathematics, statistics, and computation to understand complex biological systems and turn high-dimensional data into useful scientific insight.
-
-I also made a mobile-friendly <a href="/games/10-20-30-solitaire/index.html">10-20-30 Solitaire game</a>.
 <br />
 <br />
 <br />
 <br />
 <br />
-Here's a recent talk I gave at the APS March Meeting!
+Here's a talk I gave at the 2022 APS March Meeting:
 <iframe class="talk-video" src="https://www.youtube.com/embed/8QTNWuwBU2U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 [//]:<> Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
